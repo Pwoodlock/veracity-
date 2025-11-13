@@ -244,24 +244,85 @@ create_salt_directories() {
 start_salt_services() {
   step "Starting Salt services..."
 
+  # Ensure Salt API has proper systemd dependency on Salt Master
+  mkdir -p /etc/systemd/system/salt-api.service.d
+  cat > /etc/systemd/system/salt-api.service.d/override.conf << EOF
+[Unit]
+After=salt-master.service
+Requires=salt-master.service
+
+[Service]
+# Give Salt Master time to be ready
+ExecStartPre=/bin/sleep 5
+Restart=on-failure
+RestartSec=10
+EOF
+
+  execute systemctl daemon-reload
+
   # Enable and start Salt Master
   execute systemctl enable salt-master
   execute systemctl start salt-master
 
   if wait_for_service salt-master; then
-    success "Salt Master started"
+    success "Salt Master service started"
   else
     fatal "Failed to start Salt Master"
   fi
+
+  # Wait for Salt Master to be fully operational
+  info "Waiting for Salt Master to bind to ports..."
+  local max_attempts=30
+  local attempt=0
+  local master_ready=false
+
+  while [ $attempt -lt $max_attempts ]; do
+    # Check if Salt Master is listening on both ports
+    if ss -tln | grep -q ":4505 " && ss -tln | grep -q ":4506 "; then
+      success "Salt Master is listening on ports 4505 and 4506"
+      master_ready=true
+      break
+    fi
+    attempt=$((attempt + 1))
+    sleep 1
+  done
+
+  if [ "$master_ready" != "true" ]; then
+    error "Salt Master did not bind to ports after ${max_attempts} seconds"
+    info "Checking Salt Master status..."
+    systemctl status salt-master --no-pager -l || true
+    info "Checking Salt Master logs..."
+    journalctl -u salt-master -n 30 --no-pager || true
+    fatal "Salt Master failed to start properly"
+  fi
+
+  # Additional wait for Salt Master to be fully ready
+  info "Waiting for Salt Master to fully initialize..."
+  sleep 5
 
   # Enable and start Salt API
   execute systemctl enable salt-api
   execute systemctl start salt-api
 
   if wait_for_service salt-api; then
-    success "Salt API started"
+    success "Salt API service started"
   else
-    fatal "Failed to start Salt API"
+    # Salt API often fails on first start, try restarting it
+    warning "Salt API failed to start on first attempt, restarting..."
+    sleep 2
+    execute systemctl restart salt-api
+    sleep 3
+
+    if wait_for_service salt-api; then
+      success "Salt API started successfully after restart"
+    else
+      error "Salt API failed to start"
+      info "Checking Salt API status..."
+      systemctl status salt-api --no-pager -l || true
+      info "Checking Salt API logs..."
+      journalctl -u salt-api -n 30 --no-pager || true
+      fatal "Failed to start Salt API"
+    fi
   fi
 }
 
