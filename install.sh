@@ -208,7 +208,7 @@ EOF
 #######################################
 phase_postgresql() {
   validate_phase_prerequisites "PostgreSQL" || return 1
-  progress_bar 1 10 "Installing PostgreSQL..."
+  progress_bar 1 11 "Installing PostgreSQL..."
   source "${SCRIPT_DIR}/scripts/install/services/postgresql.sh"
   setup_postgresql
   add_rollback "Stop PostgreSQL" "systemctl stop postgresql 2>/dev/null"
@@ -220,7 +220,7 @@ phase_postgresql() {
 #######################################
 phase_redis() {
   validate_phase_prerequisites "Redis" || return 1
-  progress_bar 2 10 "Installing Redis..."
+  progress_bar 2 11 "Installing Redis..."
   source "${SCRIPT_DIR}/scripts/install/services/redis.sh"
   setup_redis
   add_rollback "Stop Redis" "systemctl stop redis-server 2>/dev/null || systemctl stop redis 2>/dev/null"
@@ -232,7 +232,7 @@ phase_redis() {
 #######################################
 phase_salt() {
   validate_phase_prerequisites "SaltStack" || return 1
-  progress_bar 3 10 "Installing SaltStack..."
+  progress_bar 3 11 "Installing SaltStack..."
   source "${SCRIPT_DIR}/scripts/install/services/salt.sh"
   setup_salt
   add_rollback "Stop Salt services" "systemctl stop salt-master salt-api 2>/dev/null"
@@ -243,7 +243,7 @@ phase_salt() {
 # Install Ruby phase
 #######################################
 phase_ruby() {
-  progress_bar 4 10 "Installing Ruby 3.3.5..."
+  progress_bar 4 11 "Installing Ruby 3.3.5..."
   source "${SCRIPT_DIR}/scripts/install/services/ruby.sh"
   setup_ruby
   add_rollback "Remove rbenv" "rm -rf /home/deploy/.rbenv 2>/dev/null"
@@ -253,7 +253,7 @@ phase_ruby() {
 # Install Node.js phase
 #######################################
 phase_nodejs() {
-  progress_bar 5 10 "Installing Node.js..."
+  progress_bar 5 11 "Installing Node.js..."
   source "${SCRIPT_DIR}/scripts/install/services/nodejs.sh"
   setup_nodejs
   add_rollback "Remove Node.js" "apt-get remove -y nodejs 2>/dev/null || dnf remove -y nodejs 2>/dev/null"
@@ -264,7 +264,7 @@ phase_nodejs() {
 #######################################
 phase_caddy() {
   validate_phase_prerequisites "Caddy" || return 1
-  progress_bar 6 10 "Installing Caddy..."
+  progress_bar 6 11 "Installing Caddy..."
   source "${SCRIPT_DIR}/scripts/install/services/caddy.sh"
   setup_caddy
   add_rollback "Stop Caddy" "systemctl stop caddy 2>/dev/null"
@@ -275,7 +275,7 @@ phase_caddy() {
 # Install Gotify phase
 #######################################
 phase_gotify() {
-  progress_bar 7 10 "Installing Gotify..."
+  progress_bar 7 11 "Installing Gotify..."
   source "${SCRIPT_DIR}/scripts/install/services/gotify.sh"
   setup_gotify
   add_rollback "Stop Gotify" "docker stop gotify 2>/dev/null && docker rm gotify 2>/dev/null"
@@ -285,7 +285,7 @@ phase_gotify() {
 # Install CVE monitoring phase
 #######################################
 phase_cve() {
-  progress_bar 7.5 10 "Installing CVE monitoring..."
+  progress_bar 8 11 "Installing CVE monitoring..."
   source "${SCRIPT_DIR}/scripts/install/services/cve_monitoring.sh"
   setup_cve_monitoring
   add_rollback "Remove CVE venv" "rm -rf /opt/cve-monitor 2>/dev/null"
@@ -296,7 +296,7 @@ phase_cve() {
 #######################################
 phase_application() {
   validate_phase_prerequisites "Application" || return 1
-  progress_bar 8 10 "Setting up application..."
+  progress_bar 9 11 "Setting up application..."
   source "${SCRIPT_DIR}/scripts/install/app-setup.sh"
   setup_application
   add_rollback "Remove application" "rm -rf /opt/server-manager 2>/dev/null"
@@ -308,7 +308,7 @@ phase_application() {
 # Setup systemd services phase
 #######################################
 phase_systemd() {
-  progress_bar 9 10 "Configuring systemd services..."
+  progress_bar 10 11 "Configuring systemd services..."
   source "${SCRIPT_DIR}/scripts/install/systemd-setup.sh"
   setup_systemd
   add_rollback "Stop services" "systemctl stop server-manager server-manager-sidekiq 2>/dev/null"
@@ -320,7 +320,7 @@ phase_systemd() {
 # Setup firewall phase
 #######################################
 phase_firewall() {
-  progress_bar 10 10 "Configuring firewall..."
+  progress_bar 11 11 "Configuring firewall..."
   source "${SCRIPT_DIR}/scripts/install/firewall.sh"
   setup_firewall
 }
