@@ -6,12 +6,16 @@
 
 set -euo pipefail
 
+# Source guard to prevent double-sourcing
+[[ -n "${VERACITY_APP_SETUP_SOURCED:-}" ]] && return 0
+readonly VERACITY_APP_SETUP_SOURCED=1
+
 # Source common functions
 SERVICE_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=./lib/common.sh
-source "${SCRIPT_DIR}/lib/common.sh"
-# shellcheck source=./lib/validators.sh
-source "${SCRIPT_DIR}/lib/validators.sh"
+# shellcheck source=../lib/common.sh
+source "${SERVICE_SCRIPT_DIR}/../lib/common.sh"
+# shellcheck source=../lib/validators.sh
+source "${SERVICE_SCRIPT_DIR}/../lib/validators.sh"
 
 # Application configuration
 readonly APP_DIR="/opt/server-manager"

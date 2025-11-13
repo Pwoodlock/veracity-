@@ -9,9 +9,9 @@ set -euo pipefail
 # Source common functions
 SERVICE_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=./lib/common.sh
-source "${SCRIPT_DIR}/lib/common.sh"
+source "${SERVICE_SCRIPT_DIR}/lib/common.sh"
 # shellcheck source=./lib/validators.sh
-source "${SCRIPT_DIR}/lib/validators.sh"
+source "${SERVICE_SCRIPT_DIR}/lib/validators.sh"
 
 readonly APP_DIR="/opt/server-manager"
 readonly HEALTH_REPORT="/root/veracity-health-check.txt"
