@@ -12,7 +12,7 @@ SERVICE_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SERVICE_SCRIPT_DIR}/../lib/common.sh"
 
 # Configuration
-readonly APP_DIR="/opt/server-manager"
+readonly APP_DIR="/opt/veracity/app"
 readonly CVE_VENV_DIR="${APP_DIR}/cve_venv"
 readonly CVE_WRAPPER="${APP_DIR}/bin/cve_python"
 readonly DEPLOY_USER="deploy"
@@ -141,7 +141,7 @@ create_wrapper_script() {
 #!/bin/bash
 # Python wrapper for CVE monitoring
 # Uses the virtual environment for PyVulnerabilityLookup
-/opt/server-manager/cve_venv/bin/python "$@"
+/opt/veracity/app/cve_venv/bin/python "$@"
 EOF
 
   # Make executable

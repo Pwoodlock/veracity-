@@ -476,8 +476,8 @@ check_prerequisites() {
   fi
 
   # Check for existing installations
-  if [ -d "/opt/server-manager" ]; then
-    warning "Existing installation detected at /opt/server-manager"
+  if [ -d "/opt/veracity/app" ]; then
+    warning "Existing installation detected at /opt/veracity/app"
     if ! confirm "This will overwrite the existing installation. Continue?"; then
       fatal "Installation cancelled by user"
     fi

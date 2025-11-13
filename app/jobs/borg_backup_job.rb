@@ -87,9 +87,9 @@ class BorgBackupJob < ApplicationJob
       # Prepare paths to backup with validation
       backup_paths = [
         db_backup_dir,
-        "/opt/server-manager/config/master.key",
-        "/opt/server-manager/.env.production",
-        "/opt/server-manager/db/schema.rb"
+        "/opt/veracity/app/config/master.key",
+        "/opt/veracity/app/.env.production",
+        "/opt/veracity/app/db/schema.rb"
       ].select { |path| validate_and_check_path(path) }
 
       # Note: /etc/salt excluded due to permission restrictions on private keys

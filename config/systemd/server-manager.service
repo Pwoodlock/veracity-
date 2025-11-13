@@ -7,12 +7,12 @@ Requires=postgresql.service redis.service
 Type=notify
 User=deploy
 Group=deploy
-WorkingDirectory=/opt/server-manager
+WorkingDirectory=/opt/veracity/app
 
 # Environment
 Environment=RAILS_ENV=production
 Environment=RACK_ENV=production
-EnvironmentFile=/opt/server-manager/.env.production
+EnvironmentFile=/opt/veracity/app/.env.production
 
 # Puma configuration
 ExecStart=/home/deploy/.rbenv/shims/bundle exec puma -C config/puma.rb
@@ -40,9 +40,9 @@ PrivateTmp=true
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/opt/server-manager/tmp
-ReadWritePaths=/opt/server-manager/log
-ReadWritePaths=/opt/server-manager/public/assets
+ReadWritePaths=/opt/veracity/app/tmp
+ReadWritePaths=/opt/veracity/app/log
+ReadWritePaths=/opt/veracity/app/public/assets
 
 [Install]
 WantedBy=multi-user.target

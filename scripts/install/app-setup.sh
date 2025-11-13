@@ -18,7 +18,7 @@ source "${SERVICE_SCRIPT_DIR}/lib/common.sh"
 source "${SERVICE_SCRIPT_DIR}/lib/validators.sh"
 
 # Application configuration
-readonly APP_DIR="/opt/server-manager"
+readonly APP_DIR="/opt/veracity/app"
 readonly DEPLOY_USER="deploy"
 readonly REPO_URL="${REPO_URL:-https://github.com/Pwoodlock/veracity-.git}"
 readonly REPO_BRANCH="${REPO_BRANCH:-main}"
@@ -163,7 +163,7 @@ fi)
 VULNERABILITY_LOOKUP_ENABLED=${CVE_ENABLED:-true}
 VULNERABILITY_LOOKUP_URL=${CVE_URL:-https://vulnerability.circl.lu}
 VULNERABILITY_LOOKUP_SCAN_SCHEDULE=${CVE_SCHEDULE:-0 2 * * *}
-VULNERABILITY_LOOKUP_PYTHON_PATH=${VULNERABILITY_LOOKUP_PYTHON_PATH:-/opt/server-manager/bin/cve_python}
+VULNERABILITY_LOOKUP_PYTHON_PATH=${VULNERABILITY_LOOKUP_PYTHON_PATH:-/opt/veracity/app/bin/cve_python}
 VULNERABILITY_LOOKUP_TIMEOUT=60
 
 # ============================================================================

@@ -221,8 +221,8 @@ provide_error_context() {
       echo "  sudo journalctl -u salt-api -n 50 --no-pager"
       ;;
     "Application")
-      echo "  cd /opt/server-manager && sudo -u deploy bundle check"
-      echo "  cd /opt/server-manager && sudo -u deploy RAILS_ENV=production bundle exec rails db:version"
+      echo "  cd /opt/veracity/app && sudo -u deploy bundle check"
+      echo "  cd /opt/veracity/app && sudo -u deploy RAILS_ENV=production bundle exec rails db:version"
       ;;
   esac
   echo ""

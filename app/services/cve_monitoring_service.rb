@@ -334,14 +334,14 @@ class CveMonitoringService
       begin
         # Get configurable settings
         api_url = SystemSetting.get('vulnerability_lookup_url', 'https://vulnerability.circl.lu')
-        python_path = SystemSetting.get('vulnerability_lookup_python_path', '/opt/server-manager/cve_venv/bin/python')
+        python_path = SystemSetting.get('vulnerability_lookup_python_path', '/opt/veracity/app/cve_venv/bin/python')
         timeout = SystemSetting.get('vulnerability_lookup_timeout', 120)
 
         # Use configured Python path, fallback if doesn't exist
         python_cmd = if File.exist?(python_path)
                       python_path
-                    elsif File.exist?('/opt/server-manager/cve_venv/bin/python')
-                      '/opt/server-manager/cve_venv/bin/python'
+                    elsif File.exist?('/opt/veracity/app/cve_venv/bin/python')
+                      '/opt/veracity/app/cve_venv/bin/python'
                     else
                       'python3'
                     end

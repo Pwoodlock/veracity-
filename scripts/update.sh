@@ -2,7 +2,7 @@
 # Veracity Update Script
 # Updates an existing Veracity installation from GitHub main branch
 #
-# Usage: sudo /opt/server-manager/scripts/update.sh
+# Usage: sudo /opt/veracity/app/scripts/update.sh
 #
 # This script will:
 # 1. Create a backup of the current installation
@@ -22,7 +22,7 @@ BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Configuration
-APP_DIR="/opt/server-manager"
+APP_DIR="/opt/veracity/app"
 BACKUP_DIR="/opt/backups/veracity-$(date +%Y%m%d-%H%M%S)"
 DEPLOY_USER="deploy"
 

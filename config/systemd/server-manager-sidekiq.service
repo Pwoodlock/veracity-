@@ -7,12 +7,12 @@ Requires=redis.service postgresql.service
 Type=notify
 User=deploy
 Group=deploy
-WorkingDirectory=/opt/server-manager
+WorkingDirectory=/opt/veracity/app
 
 # Environment
 Environment=RAILS_ENV=production
 Environment=RACK_ENV=production
-EnvironmentFile=/opt/server-manager/.env.production
+EnvironmentFile=/opt/veracity/app/.env.production
 
 # Sidekiq configuration
 ExecStart=/home/deploy/.rbenv/shims/bundle exec sidekiq -C config/sidekiq.yml
@@ -41,8 +41,8 @@ PrivateTmp=true
 NoNewPrivileges=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/opt/server-manager/tmp
-ReadWritePaths=/opt/server-manager/log
+ReadWritePaths=/opt/veracity/app/tmp
+ReadWritePaths=/opt/veracity/app/log
 
 [Install]
 WantedBy=multi-user.target

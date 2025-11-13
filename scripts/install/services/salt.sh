@@ -432,11 +432,11 @@ test_salt_api() {
 generate_minion_install_script() {
   step "Generating minion install script..."
 
-  local minion_script="/opt/server-manager/public/install-minion.sh"
+  local minion_script="/opt/veracity/app/public/install-minion.sh"
   local master_ip
   master_ip=$(hostname -I | awk '{print $1}')
 
-  mkdir -p /opt/server-manager/public
+  mkdir -p /opt/veracity/app/public
 
   cat > "${minion_script}" << 'MINION_EOF'
 #!/bin/bash

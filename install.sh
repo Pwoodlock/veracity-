@@ -191,7 +191,7 @@ Features (All Enabled):
   ✓ Proxmox API support
   ✓ OAuth2/Zitadel SSO ready
 
-Installation Path: /opt/server-manager
+Installation Path: /opt/veracity/app
 Deploy User:      deploy
 Ruby Version:     3.3.5
 Node.js Version:  18 LTS
@@ -299,7 +299,7 @@ phase_application() {
   progress_bar 9 11 "Setting up application..."
   source "${SCRIPT_DIR}/scripts/install/app-setup.sh"
   setup_application
-  add_rollback "Remove application" "rm -rf /opt/server-manager 2>/dev/null"
+  add_rollback "Remove application" "rm -rf /opt/veracity/app 2>/dev/null"
   add_rollback "Drop database" "sudo -u postgres psql -c 'DROP DATABASE IF EXISTS ${DB_NAME}' 2>/dev/null"
   add_rollback "Drop database user" "sudo -u postgres psql -c 'DROP USER IF EXISTS ${DB_USER}' 2>/dev/null"
 }

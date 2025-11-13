@@ -24,14 +24,14 @@ print_error() { echo -e "${RED}[ERROR]${NC} $1"; }
 if [ "$(whoami)" != "deploy" ]; then
   print_error "This script must be run as the deploy user"
   print_info "Run: su - deploy"
-  print_info "Then: cd /opt/server-manager && ./scripts/setup-database.sh"
+  print_info "Then: cd /opt/veracity/app && ./scripts/setup-database.sh"
   exit 1
 fi
 
 # Check if in correct directory
 if [ ! -f "config/database.yml" ]; then
   print_error "Must be run from application root directory"
-  print_info "Run: cd /opt/server-manager"
+  print_info "Run: cd /opt/veracity/app"
   exit 1
 fi
 

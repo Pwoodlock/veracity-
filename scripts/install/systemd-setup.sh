@@ -11,7 +11,7 @@ SERVICE_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=./lib/common.sh
 source "${SERVICE_SCRIPT_DIR}/lib/common.sh"
 
-readonly APP_DIR="/opt/server-manager"
+readonly APP_DIR="/opt/veracity/app"
 readonly DEPLOY_USER="deploy"
 readonly DEPLOY_HOME="/home/${DEPLOY_USER}"
 

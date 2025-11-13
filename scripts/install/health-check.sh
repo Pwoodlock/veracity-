@@ -13,7 +13,7 @@ source "${SERVICE_SCRIPT_DIR}/lib/common.sh"
 # shellcheck source=./lib/validators.sh
 source "${SERVICE_SCRIPT_DIR}/lib/validators.sh"
 
-readonly APP_DIR="/opt/server-manager"
+readonly APP_DIR="/opt/veracity/app"
 readonly HEALTH_REPORT="/root/veracity-health-check.txt"
 
 #######################################

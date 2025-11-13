@@ -2,7 +2,15 @@
 Rails.application.config.after_initialize do
   # Only run if Sidekiq and database are available
   next unless defined?(Sidekiq::Cron::Job)
-  next unless ActiveRecord::Base.connection.table_exists?('backup_configurations')
+
+  # Check database connection and table existence
+  begin
+    next unless ActiveRecord::Base.connection.active?
+    next unless ActiveRecord::Base.connection.table_exists?('backup_configurations')
+  rescue ActiveRecord::NoDatabaseError, PG::ConnectionBad
+    # Database doesn't exist yet (during initial setup)
+    next
+  end
 
   # Load the current backup configuration and register its schedule
   begin

@@ -99,22 +99,22 @@ echo ""
 #######################################
 echo -e "${CYAN}Application Status:${NC}"
 
-if [ -d "/opt/server-manager" ]; then
+if [ -d "/opt/veracity/app" ]; then
   echo -e "  ${GREEN}✓${NC} Application directory exists"
 
-  if [ -f "/opt/server-manager/.env.production" ]; then
+  if [ -f "/opt/veracity/app/.env.production" ]; then
     echo -e "  ${GREEN}✓${NC} Environment file exists"
   else
     echo -e "  ${RED}✗${NC} Environment file missing"
   fi
 
-  if [ -f "/opt/server-manager/config/database.yml" ]; then
+  if [ -f "/opt/veracity/app/config/database.yml" ]; then
     echo -e "  ${GREEN}✓${NC} Database config exists"
   else
     echo -e "  ${RED}✗${NC} Database config missing"
   fi
 
-  if [ -d "/opt/server-manager/vendor/bundle" ]; then
+  if [ -d "/opt/veracity/app/vendor/bundle" ]; then
     echo -e "  ${GREEN}✓${NC} Gems installed"
   else
     echo -e "  ${RED}✗${NC} Gems not installed"

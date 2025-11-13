@@ -147,7 +147,7 @@ After installation completes:
 ## File Locations
 
 ```
-/opt/server-manager/              # Application directory
+/opt/veracity/app/              # Application directory
 ├── app/                          # Rails application code
 ├── config/                       # Configuration files
 ├── log/                          # Application logs
@@ -206,13 +206,13 @@ systemctl restart server-manager-sidekiq
 ### View Logs
 ```bash
 # Application logs
-tail -f /opt/server-manager/log/production.log
+tail -f /opt/veracity/app/log/production.log
 
 # Puma logs
-tail -f /opt/server-manager/log/puma.log
+tail -f /opt/veracity/app/log/puma.log
 
 # Sidekiq logs
-tail -f /opt/server-manager/log/sidekiq.log
+tail -f /opt/veracity/app/log/sidekiq.log
 
 # System logs
 journalctl -u server-manager -f
@@ -333,14 +333,14 @@ sudo -u postgres psql -d server_manager_production
 
 For debugging:
 ```bash
-cd /opt/server-manager
+cd /opt/veracity/app
 sudo -u deploy bash -lc "RAILS_ENV=production bundle exec rails console"
 ```
 
 ### Reset Admin Password
 
 ```bash
-cd /opt/server-manager
+cd /opt/veracity/app
 sudo -u deploy bash -lc "RAILS_ENV=production bundle exec rails runner \"
 user = User.find_by(email: 'admin@example.com')
 user.password = 'new-secure-password'
@@ -388,7 +388,7 @@ ufw reload
 To update Veracity to the latest version from GitHub, use the included update script:
 
 ```bash
-sudo /opt/server-manager/scripts/update.sh
+sudo /opt/veracity/app/scripts/update.sh
 ```
 
 This automated script will:
@@ -417,18 +417,18 @@ If you prefer to update manually:
 sudo systemctl stop server-manager server-manager-sidekiq
 
 # Pull latest code
-cd /opt/server-manager
+cd /opt/veracity/app
 sudo -u deploy git pull origin main
 
 # Update dependencies (uses exact versions from lock files)
-sudo -u deploy bash -lc "cd /opt/server-manager && bundle install --deployment"
-sudo -u deploy bash -lc "cd /opt/server-manager && yarn install --frozen-lockfile"
+sudo -u deploy bash -lc "cd /opt/veracity/app && bundle install --deployment"
+sudo -u deploy bash -lc "cd /opt/veracity/app && yarn install --frozen-lockfile"
 
 # Run migrations
-sudo -u deploy bash -lc "cd /opt/server-manager && RAILS_ENV=production bundle exec rails db:migrate"
+sudo -u deploy bash -lc "cd /opt/veracity/app && RAILS_ENV=production bundle exec rails db:migrate"
 
 # Precompile assets
-sudo -u deploy bash -lc "cd /opt/server-manager && RAILS_ENV=production bundle exec rails assets:precompile"
+sudo -u deploy bash -lc "cd /opt/veracity/app && RAILS_ENV=production bundle exec rails assets:precompile"
 
 # Start services
 sudo systemctl start server-manager server-manager-sidekiq
@@ -442,7 +442,7 @@ sudo systemctl status server-manager server-manager-sidekiq
 To see if updates are available without installing:
 
 ```bash
-cd /opt/server-manager
+cd /opt/veracity/app
 sudo -u deploy git fetch origin main
 sudo -u deploy git log HEAD..origin/main --oneline
 ```
@@ -474,7 +474,7 @@ To completely remove Veracity:
 systemctl stop server-manager server-manager-sidekiq caddy salt-api salt-master
 
 # Remove application
-rm -rf /opt/server-manager
+rm -rf /opt/veracity/app
 
 # Remove services
 rm /etc/systemd/system/server-manager*.service
