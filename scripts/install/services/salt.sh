@@ -69,13 +69,34 @@ install_salt() {
 
   success "Salt packages installed via official bootstrap"
 
-  # Verify installation
+  # Verify installation and create symlinks if needed (onedir installation)
+  if ! command -v salt-master >/dev/null 2>&1; then
+    # Check onedir location
+    if [ -x /opt/saltstack/salt/salt-master ]; then
+      warning "salt-master found in onedir location, creating symlink..."
+      ln -sf /opt/saltstack/salt/salt-master /usr/bin/salt-master
+    else
+      fatal "Salt Master installation failed - salt-master not found"
+    fi
+  fi
+
+  if ! command -v salt-api >/dev/null 2>&1; then
+    # Check onedir location
+    if [ -x /opt/saltstack/salt/salt-api ]; then
+      info "salt-api found in onedir location, creating symlink..."
+      ln -sf /opt/saltstack/salt/salt-api /usr/bin/salt-api
+    else
+      fatal "Salt API installation failed - salt-api not found"
+    fi
+  fi
+
+  # Verify both are now available
   if command -v salt-master >/dev/null 2>&1 && command -v salt-api >/dev/null 2>&1; then
     local salt_version
     salt_version=$(salt --version 2>/dev/null | head -1 || echo "unknown")
     info "Salt version: ${salt_version}"
   else
-    fatal "Salt installation failed - salt-master or salt-api not found"
+    fatal "Salt installation verification failed"
   fi
 }
 
