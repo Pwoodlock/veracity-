@@ -483,6 +483,9 @@ save_credentials() {
 ================================================================================
 VERACITY INSTALLATION CREDENTIALS
 ================================================================================
+⚠️  SECURITY NOTICE: This file is stored in /tmp/ and will be automatically
+    deleted on system reboot. Copy this file to a secure location immediately!
+
 Installation completed: $(date)
 
 ACCESS INFORMATION:
@@ -561,6 +564,8 @@ EOF
 # Print installation summary
 #######################################
 print_summary() {
+  local creds_file="${1:-/tmp/veracity-install-credentials.txt}"
+
   section "Installation Complete! ${ROCKET}"
   echo ""
   echo -e "${GREEN}${BOLD}Veracity has been successfully installed!${NC}"
@@ -573,22 +578,31 @@ print_summary() {
   echo -e "${BOLD}Installation Details:${NC}"
   echo -e "  ${CYAN}Application:${NC} /opt/server-manager"
   echo -e "  ${CYAN}Logs:${NC} /opt/server-manager/log/production.log"
-  echo -e "  ${CYAN}Credentials:${NC} /root/veracity-install-credentials.txt"
+  echo ""
+  echo -e "${RED}${BOLD}⚠️  IMPORTANT - CREDENTIALS FILE:${NC}"
+  echo -e "  ${CYAN}Location:${NC} ${creds_file}"
+  echo -e "  ${RED}${BOLD}⚠️  THIS FILE IS IN /tmp/ AND WILL BE DELETED ON REBOOT!${NC}"
+  echo -e "  ${YELLOW}→ COPY THIS FILE TO A SECURE LOCATION NOW:${NC}"
+  echo -e "    ${BLUE}scp root@$(hostname):${creds_file} ~/veracity-credentials.txt${NC}"
+  echo -e "  ${YELLOW}→ OR VIEW IT NOW:${NC}"
+  echo -e "    ${BLUE}cat ${creds_file}${NC}"
+  echo -e "  ${YELLOW}→ THEN DELETE IT:${NC}"
+  echo -e "    ${BLUE}rm ${creds_file}${NC}"
   echo ""
   echo -e "${BOLD}Services Status:${NC}"
   systemctl status server-manager --no-pager -l | head -3
   systemctl status server-manager-sidekiq --no-pager -l | head -3
   echo ""
   echo -e "${BOLD}Next Steps:${NC}"
-  echo -e "  ${GREEN}1.${NC} Access the dashboard and log in"
-  echo -e "  ${GREEN}2.${NC} Enable 2FA for security"
-  echo -e "  ${GREEN}3.${NC} Configure optional integrations (Gotify, Hetzner, Proxmox)"
-  echo -e "  ${GREEN}4.${NC} Install minions on your servers:"
+  echo -e "  ${GREEN}1.${NC} ${BOLD}COPY THE CREDENTIALS FILE (see warning above)${NC}"
+  echo -e "  ${GREEN}2.${NC} Access the dashboard and log in"
+  echo -e "  ${GREEN}3.${NC} Enable 2FA for security"
+  echo -e "  ${GREEN}4.${NC} Configure optional integrations (Gotify, Hetzner, Proxmox)"
+  echo -e "  ${GREEN}5.${NC} Install minions on your servers:"
   echo -e "     ${BLUE}curl -sSL ${INSTALL_URL}/install/minion.sh | sudo bash${NC}"
-  echo -e "  ${GREEN}5.${NC} Accept minion keys in the Onboarding page"
+  echo -e "  ${GREEN}6.${NC} Accept minion keys in the Onboarding page"
   echo ""
   echo -e "${YELLOW}${LOCK} Remember to:${NC}"
-  echo -e "  - Secure /root/veracity-install-credentials.txt"
   echo -e "  - Change default passwords after first login"
   echo -e "  - Configure backup strategy"
   echo -e "  - Set up monitoring and alerts"

@@ -373,8 +373,9 @@ run_installation() {
   run_phase "Firewall" phase_firewall "required" || return 1
   run_phase "HealthChecks" phase_health_checks "optional"
 
-  # Save credentials
-  save_credentials "/root/veracity-install-credentials.txt"
+  # Save credentials to /tmp (secure: auto-deleted on reboot)
+  local creds_file="/tmp/veracity-install-credentials-$(date +%Y%m%d-%H%M%S).txt"
+  save_credentials "${creds_file}"
 
   # Calculate installation time
   local end_time
@@ -383,8 +384,8 @@ run_installation() {
   local minutes=$((duration / 60))
   local seconds=$((duration % 60))
 
-  # Print summary
-  print_summary
+  # Print summary with credentials file path
+  print_summary "${creds_file}"
 
   success "Installation completed in ${minutes}m ${seconds}s!"
 }
