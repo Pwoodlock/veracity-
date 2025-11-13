@@ -107,6 +107,18 @@ EOF
     success "rbenv added to .bashrc"
   fi
 
+  # Ensure .bash_profile sources .bashrc (for login shells)
+  if [ ! -f "${DEPLOY_HOME}/.bash_profile" ]; then
+    cat > "${DEPLOY_HOME}/.bash_profile" << 'EOF'
+# Source .bashrc if it exists
+if [ -f "$HOME/.bashrc" ]; then
+    . "$HOME/.bashrc"
+fi
+EOF
+    execute chown "${DEPLOY_USER}:${DEPLOY_USER}" "${DEPLOY_HOME}/.bash_profile"
+    info "Created .bash_profile to source .bashrc"
+  fi
+
   success "rbenv installed successfully"
 }
 
