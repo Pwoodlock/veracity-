@@ -44,9 +44,9 @@ install_salt() {
       ;;
   esac
 
-  # Download official Salt bootstrap script (stable branch)
+  # Download official Salt bootstrap script (new location as of Oct 2024)
   info "Downloading Salt bootstrap script..."
-  execute curl -L https://bootstrap.saltproject.io/stable -o /tmp/bootstrap-salt.sh
+  execute curl -L https://github.com/saltstack/salt-bootstrap/releases/latest/download/bootstrap-salt.sh -o /tmp/bootstrap-salt.sh
 
   # Install Salt Master and Salt API (without starting services yet)
   # -M = Install Salt Master
