@@ -4,6 +4,10 @@
 # Provides input validation, system checks, and prerequisite verification
 #
 
+# Prevent multiple sourcing
+[[ -n "${VERACITY_VALIDATORS_SOURCED:-}" ]] && return 0
+readonly VERACITY_VALIDATORS_SOURCED=1
+
 # Source common functions if not already loaded
 if ! command -v info &> /dev/null; then
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

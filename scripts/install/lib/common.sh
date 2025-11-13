@@ -4,6 +4,10 @@
 # Provides colored output, logging, error handling, and helper utilities
 #
 
+# Prevent multiple sourcing
+[[ -n "${VERACITY_COMMON_SOURCED:-}" ]] && return 0
+readonly VERACITY_COMMON_SOURCED=1
+
 # Color codes for output
 readonly RED='\033[0;31m'
 readonly GREEN='\033[0;32m'
