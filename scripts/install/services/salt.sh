@@ -272,7 +272,32 @@ start_salt_services() {
 test_salt_api() {
   step "Testing Salt API..."
 
-  sleep 3  # Give API time to fully start
+  # Wait for port 8001 to be listening (Salt API takes 10-15 seconds to fully start)
+  local max_attempts=30
+  local attempt=0
+
+  info "Waiting for Salt API to start serving on port 8001..."
+  while [ $attempt -lt $max_attempts ]; do
+    if ss -tln | grep -q ":8001 "; then
+      success "Salt API is listening on port 8001"
+      break
+    fi
+
+    attempt=$((attempt + 1))
+    sleep 1
+  done
+
+  if [ $attempt -eq $max_attempts ]; then
+    error "Salt API did not start listening on port 8001 after ${max_attempts} seconds"
+    info "Checking Salt API service status..."
+    systemctl status salt-api --no-pager -l || true
+    info "Checking Salt API logs..."
+    journalctl -u salt-api -n 20 --no-pager || true
+    fatal "Salt API failed to start properly"
+  fi
+
+  # Additional wait for API to be fully ready
+  sleep 2
 
   # Test API endpoint is accessible
   if curl -sSf "http://127.0.0.1:8001" -o /dev/null 2>&1; then
