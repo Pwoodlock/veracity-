@@ -57,8 +57,8 @@ EOF
 #   $2 - Message
 #######################################
 log_message() {
-  local level="$1"
-  local message="$2"
+  local level="${1:-INFO}"
+  local message="${2:-}"
   local timestamp
   timestamp=$(date '+%Y-%m-%d %H:%M:%S')
 
@@ -79,9 +79,9 @@ log_message() {
 #   $3 - Exit code
 #######################################
 handle_error() {
-  local line_number="$1"
-  local command="$2"
-  local exit_code="$3"
+  local line_number="${1:-0}"
+  local command="${2:-unknown}"
+  local exit_code="${3:-1}"
 
   # Don't handle errors from subshells or ignored commands
   [[ $exit_code -eq 0 ]] && return 0
@@ -139,8 +139,8 @@ handle_error() {
 #   $2 - Exit code
 #######################################
 provide_error_context() {
-  local phase="$1"
-  local exit_code="$2"
+  local phase="${1:-Unknown}"
+  local exit_code="${2:-1}"
 
   echo -e "${YELLOW}Likely causes:${NC}"
 
@@ -257,8 +257,8 @@ handle_exit() {
 #   $2 - Status (started|completed|failed)
 #######################################
 checkpoint() {
-  local phase="$1"
-  local status="$2"
+  local phase="${1:-unknown}"
+  local status="${2:-unknown}"
   local timestamp
   timestamp=$(date '+%Y-%m-%d %H:%M:%S')
 
@@ -276,7 +276,7 @@ checkpoint() {
 #   $1 - Phase name
 #######################################
 mark_checkpoint_failed() {
-  local phase="$1"
+  local phase="${1:-unknown}"
   checkpoint "${phase}" "failed"
 }
 
@@ -288,7 +288,7 @@ mark_checkpoint_failed() {
 #   0 if completed, 1 otherwise
 #######################################
 is_phase_completed() {
-  local phase="$1"
+  local phase="${1:-}"
 
   if [ ! -f "${CHECKPOINT_FILE}" ]; then
     return 1
@@ -332,8 +332,8 @@ get_failed_phases() {
 #   $2 - Command to execute
 #######################################
 add_rollback() {
-  local description="$1"
-  local command="$2"
+  local description="${1:-No description}"
+  local command="${2:-true}"
 
   cat >> "${ROLLBACK_SCRIPT}" << EOF
 
@@ -370,7 +370,7 @@ execute_rollback() {
 #   $2+ - Command and arguments to execute
 #######################################
 safe_execute() {
-  local description="$1"
+  local description="${1:-Executing command}"
   shift
   local command=("$@")
 
@@ -410,8 +410,8 @@ safe_execute() {
 #   $3 - Optional: "required" or "optional"
 #######################################
 run_phase() {
-  local phase_name="$1"
-  local phase_function="$2"
+  local phase_name="${1:-unknown}"
+  local phase_function="${2:-}"
   local phase_type="${3:-required}"
 
   # Check if already completed (resume support)
@@ -485,7 +485,7 @@ show_resume_info() {
 #   0 if validation passed, 1 otherwise
 #######################################
 validate_phase_prerequisites() {
-  local phase="$1"
+  local phase="${1:-unknown}"
 
   log_message "INFO" "Validating prerequisites for phase: ${phase}"
 
