@@ -293,3 +293,4 @@ docs/.docusaurus/
 docs/build/
 .agent-os/
 salt/
+.claude_context.md

@@ -23,7 +23,7 @@ source "${SERVICE_SCRIPT_DIR}/../lib/validators.sh"
 install_salt() {
   section "Installing SaltStack"
 
-  case "${OS_ID}" in
+  case "${OS_ID:-ubuntu}" in
     ubuntu|debian)
       install_salt_debian
       ;;
@@ -31,7 +31,7 @@ install_salt() {
       install_salt_rhel
       ;;
     *)
-      fatal "Unsupported OS for Salt installation: ${OS_ID}"
+      fatal "Unsupported OS for Salt installation: ${OS_ID:-unknown}"
       ;;
   esac
 }
@@ -53,7 +53,7 @@ install_salt_debian() {
     -o /usr/share/keyrings/salt-archive-keyring.pgp
 
   # Add Salt repository
-  case "${OS_VERSION}" in
+  case "${OS_VERSION:-24.04}" in
     22.04)
       echo "deb [signed-by=/usr/share/keyrings/salt-archive-keyring.pgp arch=amd64] https://packages.broadcom.com/artifactory/saltproject-deb/ stable main" \
         > /etc/apt/sources.list.d/salt.list
