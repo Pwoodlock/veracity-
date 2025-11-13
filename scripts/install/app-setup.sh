@@ -250,16 +250,12 @@ setup_database() {
   fi
   success "Database created"
 
-  # Load schema or run migrations
-  info "Loading database schema..."
-  if ! sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:schema:load" >> "${LOG_FILE}" 2>&1; then
-    # Try with migrations if schema load fails
-    warning "Schema load failed, trying with migrations..."
-    if ! sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:migrate" >> "${LOG_FILE}" 2>&1; then
-      fatal "Failed to setup database schema. Check ${LOG_FILE} for details"
-    fi
+  # Run migrations (skip schema:load as schema.rb may be out of sync)
+  info "Running database migrations..."
+  if ! sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:migrate" >> "${LOG_FILE}" 2>&1; then
+    fatal "Failed to run database migrations. Check ${LOG_FILE} for details"
   fi
-  success "Database schema loaded"
+  success "Database migrations completed"
 
   # Load seeds if present
   if [ -f "${APP_DIR}/db/seeds.rb" ]; then
