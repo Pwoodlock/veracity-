@@ -18,6 +18,21 @@ cd veracity-
 sudo ./install.sh
 ```
 
+### Installation with Error Recovery
+
+The installer includes comprehensive error handling with checkpoint support:
+
+```bash
+# Resume installation after fixing errors
+sudo ./install.sh --resume
+
+# Rollback all changes
+sudo ./install.sh --rollback
+
+# Run diagnostic check
+sudo ./scripts/install/diagnose.sh
+```
+
 ## System Requirements
 
 ### Minimum Requirements
@@ -144,7 +159,16 @@ After installation completes:
 /home/deploy/                     # Deploy user home
 └── .rbenv/                       # Ruby installation
 
-/var/log/veracity-install/        # Installation logs
+/var/log/                         # System logs
+├── veracity-install.log          # Installation log
+└── caddy/                        # Caddy access logs
+
+/var/lib/veracity-installer/      # Installation state
+├── checkpoints                   # Phase completion tracking
+├── errors.log                    # Error log
+├── rollback.sh                   # Auto-generated rollback script
+└── config                        # Saved installation config
+
 /root/veracity-install-credentials.txt  # Saved credentials
 
 /var/lib/gotify/                  # Gotify data directory
@@ -199,9 +223,92 @@ journalctl -u server-manager-sidekiq -f
 
 ### Installation Failed
 
-Check installation logs:
+The installer includes comprehensive error handling with detailed diagnostics. When an error occurs:
+
+1. **Review the error message** - The installer displays context-specific error information
+2. **Run diagnostics** - Check system state with the diagnostic tool:
+   ```bash
+   sudo ./scripts/install/diagnose.sh
+   ```
+
+3. **Check logs**:
+   ```bash
+   # Installation log
+   tail -n 100 /var/log/veracity-install.log
+
+   # Error log with detailed context
+   cat /var/lib/veracity-installer/errors.log
+
+   # View completed phases
+   cat /var/lib/veracity-installer/checkpoints
+   ```
+
+4. **Resume installation** after fixing issues:
+   ```bash
+   sudo ./install.sh --resume
+   ```
+
+5. **Rollback if needed**:
+   ```bash
+   sudo ./install.sh --rollback
+   ```
+
+### Common Installation Issues
+
+#### Port Already in Use
+
+If you see "Port X is already in use" errors:
+
 ```bash
-tail -n 100 /var/log/veracity-install/install-*.log
+# Find what's using the port
+sudo ss -tlnp | grep :PORT_NUMBER
+
+# Stop the conflicting service
+sudo systemctl stop SERVICE_NAME
+```
+
+#### Salt API Not Starting
+
+Salt API can take 10-15 seconds to fully initialize. If it fails:
+
+```bash
+# Check Salt API status
+sudo systemctl status salt-api
+
+# View logs
+sudo journalctl -u salt-api -n 50 --no-pager
+
+# Restart if needed
+sudo systemctl restart salt-master
+sudo systemctl restart salt-api
+```
+
+#### Ruby Installation Timeout
+
+Ruby compilation requires significant resources. If it fails:
+
+```bash
+# Check available memory
+free -h
+
+# Check available disk space
+df -h
+
+# Resume installation (will retry from last successful checkpoint)
+sudo ./install.sh --resume
+```
+
+#### PostgreSQL Connection Failed
+
+```bash
+# Check PostgreSQL is running
+sudo systemctl status postgresql
+
+# Test connection
+sudo -u postgres psql -c '\l'
+
+# Check logs
+sudo journalctl -u postgresql -n 50 --no-pager
 ```
 
 ### Services Not Starting
@@ -210,6 +317,9 @@ Check service status and logs:
 ```bash
 systemctl status server-manager
 journalctl -u server-manager -n 50 --no-pager
+
+# Check dependencies
+systemctl status postgresql redis-server salt-api
 ```
 
 ### Database Connection Issues
@@ -237,6 +347,21 @@ user.password = 'new-secure-password'
 user.password_confirmation = 'new-secure-password'
 user.save!
 \""
+```
+
+### Get Installation State
+
+View what phases have completed and which failed:
+
+```bash
+# View checkpoints
+cat /var/lib/veracity-installer/checkpoints
+
+# View error summary
+cat /var/lib/veracity-installer/errors.log
+
+# Run full diagnostic
+sudo ./scripts/install/diagnose.sh
 ```
 
 ## Firewall Configuration
