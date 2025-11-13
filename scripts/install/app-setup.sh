@@ -17,9 +17,13 @@ source "${SERVICE_SCRIPT_DIR}/lib/common.sh"
 # shellcheck source=lib/validators.sh
 source "${SERVICE_SCRIPT_DIR}/lib/validators.sh"
 
-# Application configuration
-readonly APP_DIR="/opt/veracity/app"
-readonly DEPLOY_USER="deploy"
+# Application configuration (don't redeclare if already set)
+if [[ -z "${APP_DIR:-}" ]]; then
+  readonly APP_DIR="/opt/veracity/app"
+fi
+if [[ -z "${DEPLOY_USER:-}" ]]; then
+  readonly DEPLOY_USER="deploy"
+fi
 readonly REPO_URL="${REPO_URL:-https://github.com/Pwoodlock/veracity-.git}"
 readonly REPO_BRANCH="${REPO_BRANCH:-main}"
 

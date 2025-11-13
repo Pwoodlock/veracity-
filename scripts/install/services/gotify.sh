@@ -224,8 +224,12 @@ display_gotify_info() {
   fi
 
   echo ""
-  info "Access Gotify at: http://${RAILS_HOST}:${GOTIFY_PORT}"
-  info "Or configure a subdomain (e.g., gotify.${RAILS_HOST})"
+  if [ -n "${GOTIFY_HOST:-}" ]; then
+    info "Access Gotify at: ${RAILS_PROTOCOL}://${GOTIFY_HOST}"
+  else
+    info "Access Gotify at: http://${RAILS_HOST}:${GOTIFY_PORT}"
+    info "Or configure a subdomain (e.g., gotify.${RAILS_HOST})"
+  fi
 
   echo ""
   warning "IMPORTANT: Secure Gotify behind a reverse proxy for production use"
@@ -237,14 +241,8 @@ display_gotify_info() {
 #######################################
 configure_gotify_firewall() {
   if command_exists ufw; then
-    step "Configuring firewall for Gotify..."
-
-    if confirm "Allow Gotify port ${GOTIFY_PORT} through firewall?" "n"; then
-      execute ufw allow "${GOTIFY_PORT}/tcp"
-      success "Firewall rule added for port ${GOTIFY_PORT}"
-    else
-      info "Skipping firewall configuration (access via reverse proxy recommended)"
-    fi
+    # Skip firewall configuration - Gotify is accessed via reverse proxy (Caddy)
+    info "Gotify will be accessed via reverse proxy (Caddy), skipping direct port access"
   fi
 }
 

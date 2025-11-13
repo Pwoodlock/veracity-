@@ -12,10 +12,15 @@ SERVICE_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SERVICE_SCRIPT_DIR}/../lib/common.sh"
 
 # Configuration
-readonly APP_DIR="/opt/veracity/app"
+# Application configuration (don't redeclare if already set)
+if [[ -z "${APP_DIR:-}" ]]; then
+  readonly APP_DIR="/opt/veracity/app"
+fi
 readonly CVE_VENV_DIR="${APP_DIR}/cve_venv"
 readonly CVE_WRAPPER="${APP_DIR}/bin/cve_python"
-readonly DEPLOY_USER="deploy"
+if [[ -z "${DEPLOY_USER:-}" ]]; then
+  readonly DEPLOY_USER="deploy"
+fi
 
 #######################################
 # Install Python 3 and venv
