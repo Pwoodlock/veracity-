@@ -103,10 +103,10 @@ create_postgres_user() {
     warning "User ${username} already exists, updating password"
 
     sudo -u postgres psql -c \
-      "ALTER USER ${username} WITH PASSWORD '${password}';" &>> "${LOG_FILE}"
+      "ALTER USER ${username} WITH PASSWORD '${password}' CREATEDB;" &>> "${LOG_FILE}"
   else
     sudo -u postgres psql -c \
-      "CREATE USER ${username} WITH PASSWORD '${password}';" &>> "${LOG_FILE}"
+      "CREATE USER ${username} WITH PASSWORD '${password}' CREATEDB;" &>> "${LOG_FILE}"
   fi
 
   success "PostgreSQL user ${username} created"
