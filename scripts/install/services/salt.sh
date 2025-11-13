@@ -254,35 +254,46 @@ create_salt_directories() {
 start_salt_services() {
   step "Starting Salt services..."
 
-  # Ensure Salt API has proper systemd configuration
-  mkdir -p /etc/systemd/system/salt-api.service.d
-  cat > /etc/systemd/system/salt-api.service.d/override.conf << EOF
+  # Create salt-api systemd service file if it doesn't exist
+  # (bootstrap script doesn't create this for onedir installations)
+  if [ ! -f /usr/lib/systemd/system/salt-api.service ]; then
+    info "Creating salt-api systemd service file..."
+    cat > /usr/lib/systemd/system/salt-api.service << 'EOF'
 [Unit]
-Description=Salt API Service
+Description=Salt API
+Documentation=man:salt-api(1)
 After=salt-master.service network-online.target
 Wants=network-online.target
 Requires=salt-master.service
 
 [Service]
 Type=simple
+ExecStart=/usr/bin/salt-api
 User=root
 Group=root
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
+EOF
+    success "Created salt-api.service file"
+  fi
+
+  # Add systemd configuration override for additional settings
+  mkdir -p /etc/systemd/system/salt-api.service.d
+  cat > /etc/systemd/system/salt-api.service.d/override.conf << EOF
+[Service]
 # Ensure CherryPy runs in foreground
 Environment="PYTHONUNBUFFERED=1"
 # Give Salt Master time to be fully ready
 ExecStartPre=/bin/sleep 10
-ExecStart=/usr/bin/salt-api
+# Always restart on failure
 Restart=always
-RestartSec=10
 StartLimitInterval=0
 # Increase timeout for CherryPy startup
 TimeoutStartSec=90
 TimeoutStopSec=30
-# Ensure service stays running
-RemainAfterExit=no
-
-[Install]
-WantedBy=multi-user.target
 EOF
 
   execute systemctl daemon-reload
