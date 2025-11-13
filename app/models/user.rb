@@ -11,7 +11,7 @@ class User < ApplicationRecord
          :omniauthable, omniauth_providers: [:zitadel]
 
   # Encrypt OTP secret
-  attr_encrypted :otp_secret, key: Rails.application.credentials.secret_key_base[0..31]
+  attr_encrypted :otp_secret, key: ENV['SECRET_KEY_BASE'][0..31]
 
   # Associations
   has_many :commands, dependent: :nullify  # Nullify to keep command history even if user is deleted
