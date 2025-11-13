@@ -12,10 +12,10 @@ readonly VERACITY_APP_SETUP_SOURCED=1
 
 # Source common functions
 SERVICE_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# shellcheck source=../lib/common.sh
-source "${SERVICE_SCRIPT_DIR}/../lib/common.sh"
-# shellcheck source=../lib/validators.sh
-source "${SERVICE_SCRIPT_DIR}/../lib/validators.sh"
+# shellcheck source=lib/common.sh
+source "${SERVICE_SCRIPT_DIR}/lib/common.sh"
+# shellcheck source=lib/validators.sh
+source "${SERVICE_SCRIPT_DIR}/lib/validators.sh"
 
 # Application configuration
 readonly APP_DIR="/opt/server-manager"
@@ -200,8 +200,12 @@ install_gems() {
 
   cd "${APP_DIR}"
 
+  # Helper to run commands with rbenv loaded
+  local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
+
   # Install gems as deploy user
-  if ! sudo -u "${DEPLOY_USER}" bash -lc "cd ${APP_DIR} && bundle config set --local deployment 'true' && bundle install --jobs=4 --retry=3" >> "${LOG_FILE}" 2>&1; then
+  # Note: Not using --deployment flag to allow Gemfile.lock updates if needed
+  if ! sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle install --jobs=4 --retry=3 --without development test" >> "${LOG_FILE}" 2>&1; then
     fatal "Failed to install gems. Check ${LOG_FILE} for details"
   fi
 
@@ -216,8 +220,11 @@ install_node_packages() {
 
   cd "${APP_DIR}"
 
+  # Helper to run commands with rbenv loaded
+  local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
+
   # Install packages as deploy user
-  if ! sudo -u "${DEPLOY_USER}" bash -lc "cd ${APP_DIR} && yarn install --frozen-lockfile" >> "${LOG_FILE}" 2>&1; then
+  if ! sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && yarn install --frozen-lockfile" >> "${LOG_FILE}" 2>&1; then
     fatal "Failed to install Node packages. Check ${LOG_FILE} for details"
   fi
 
@@ -232,19 +239,22 @@ setup_database() {
 
   cd "${APP_DIR}"
 
+  # Helper to run commands with rbenv loaded
+  local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
+
   # Create database first
   info "Creating database..."
-  if ! sudo -u "${DEPLOY_USER}" bash -lc "cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:create" >> "${LOG_FILE}" 2>&1; then
+  if ! sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:create" >> "${LOG_FILE}" 2>&1; then
     fatal "Failed to create database. Check ${LOG_FILE} for details"
   fi
   success "Database created"
 
   # Load schema or run migrations
   info "Loading database schema..."
-  if ! sudo -u "${DEPLOY_USER}" bash -lc "cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:schema:load" >> "${LOG_FILE}" 2>&1; then
+  if ! sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:schema:load" >> "${LOG_FILE}" 2>&1; then
     # Try with migrations if schema load fails
     warning "Schema load failed, trying with migrations..."
-    if ! sudo -u "${DEPLOY_USER}" bash -lc "cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:migrate" >> "${LOG_FILE}" 2>&1; then
+    if ! sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:migrate" >> "${LOG_FILE}" 2>&1; then
       fatal "Failed to setup database schema. Check ${LOG_FILE} for details"
     fi
   fi
@@ -253,7 +263,7 @@ setup_database() {
   # Load seeds if present
   if [ -f "${APP_DIR}/db/seeds.rb" ]; then
     info "Loading database seeds..."
-    sudo -u "${DEPLOY_USER}" bash -lc "cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:seed" >> "${LOG_FILE}" 2>&1 || true
+    sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:seed" >> "${LOG_FILE}" 2>&1 || true
   fi
 
   success "Database setup complete"
@@ -267,8 +277,11 @@ precompile_assets() {
 
   cd "${APP_DIR}"
 
+  # Helper to run commands with rbenv loaded
+  local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
+
   # Precompile assets as deploy user
-  if ! sudo -u "${DEPLOY_USER}" bash -lc "cd ${APP_DIR} && RAILS_ENV=production bundle exec rails assets:precompile" >> "${LOG_FILE}" 2>&1; then
+  if ! sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails assets:precompile" >> "${LOG_FILE}" 2>&1; then
     fatal "Failed to precompile assets. Check ${LOG_FILE} for details"
   fi
 
@@ -282,6 +295,9 @@ create_admin_user() {
   step "Creating admin user..."
 
   cd "${APP_DIR}"
+
+  # Helper to run commands with rbenv loaded
+  local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
 
   # Create admin user via Rails console
   local create_admin_script="
@@ -299,7 +315,7 @@ create_admin_user() {
     end
   "
 
-  if timeout 60 sudo -u "${DEPLOY_USER}" bash -lc "cd ${APP_DIR} && RAILS_ENV=production bundle exec rails runner \"${create_admin_script}\"" >> "${LOG_FILE}" 2>&1; then
+  if timeout 60 sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails runner \"${create_admin_script}\"" >> "${LOG_FILE}" 2>&1; then
     success "Admin user created: ${ADMIN_EMAIL}"
   else
     warning "Failed to create admin user automatically (timed out or error occurred)"
