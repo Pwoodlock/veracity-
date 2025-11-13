@@ -1,0 +1,299 @@
+<% content_for :head do %>
+  <title>Proxmox API Keys - Server Manager</title>
+<% end %>
+
+<%= render 'shared/navigation' %>
+
+<%= render partial: 'shared/navigation' %>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Settings Tabs -->
+    <div class="mb-6 border-b border-base-content/10">
+      <nav class="-mb-px flex space-x-8">
+        <%= link_to settings_backups_path, class: "border-b-2 border-transparent py-4 px-1 text-sm font-medium text-base-content/60 hover:text-base-content/80 hover:border-base-content/20" do %>
+          Borg Backup
+        <% end %>
+        <%= link_to settings_hetzner_api_keys_path, class: "border-b-2 border-transparent py-4 px-1 text-sm font-medium text-base-content/60 hover:text-base-content/80 hover:border-base-content/20" do %>
+          Hetzner API Keys
+        <% end %>
+        <%= link_to settings_proxmox_api_keys_path, class: "border-b-2 border-primary py-4 px-1 text-sm font-medium text-primary" do %>
+          Proxmox API Keys
+        <% end %>
+        <%= link_to settings_maintenance_path, class: "border-b-2 border-transparent py-4 px-1 text-sm font-medium text-base-content/60 hover:text-base-content/80 hover:border-base-content/20" do %>
+          Maintenance
+        <% end %>
+      </nav>
+    </div>
+
+    <h1 class="text-2xl font-bold text-base-content mb-6">Proxmox VE API Keys</h1>
+
+    <!-- Flash Messages -->
+    <% if flash[:success] %>
+      <div class="alert alert-success mb-6">
+        <p><%= flash[:success] %></p>
+      </div>
+    <% end %>
+    <% if flash[:alert] %>
+      <div class="alert alert-error mb-6">
+        <p><%= flash[:alert] %></p>
+      </div>
+    <% end %>
+
+    <!-- Info Card -->
+    <div class="mb-8 p-6 bg-base-200 border border-primary rounded-lg">
+      <h2 class="text-lg font-semibold text-primary mb-2">About Proxmox VE Integration</h2>
+      <p class="text-base-content/80 mb-3">
+        Store your Proxmox VE API credentials here to enable VM and LXC container control.
+        Manage virtual machines and containers directly from the server dashboard.
+      </p>
+      <div class="text-sm text-base-content/80 space-y-1">
+        <p><strong class="text-base-content">What You Can Do:</strong></p>
+        <ul class="list-disc list-inside ml-2 space-y-1">
+          <li>Start, stop, shutdown, and reboot VMs and LXC containers</li>
+          <li>Refresh VM/LXC status and monitor power state</li>
+          <li>Create, list, rollback, and delete snapshots</li>
+          <li>Discover VMs and containers on your Proxmox nodes</li>
+          <li>Full command audit trail for all operations</li>
+        </ul>
+      </div>
+      <div class="mt-3 text-sm text-base-content/80">
+        <strong class="text-base-content">Getting Started:</strong>
+        <ol class="list-decimal list-inside ml-2 mt-1 space-y-1">
+          <li>Log in to your Proxmox VE web interface</li>
+          <li>Navigate to Datacenter → Permissions → API Tokens</li>
+          <li>Create a new API token (e.g., "root@pam!api")</li>
+          <li>Copy the token secret (shown only once!)</li>
+          <li>Add your Proxmox URL (e.g., https://pve-1.fritz.box:8006)</li>
+          <li>Configure servers with Proxmox node name and VMID</li>
+        </ol>
+      </div>
+      <div class="mt-3 text-xs text-primary/80 bg-base-300 border border-primary rounded p-2">
+        <strong>Documentation:</strong>
+        <a href="https://pve.proxmox.com/wiki/Proxmox_VE_API" target="_blank" class="text-primary hover:text-primary-focus underline ml-1">
+          Proxmox VE API Documentation
+        </a>
+      </div>
+    </div>
+
+    <!-- Add New API Key Form -->
+    <div class="bg-base-200 border border-base-content/10 rounded-lg shadow-lg p-6 mb-8">
+      <h2 class="text-lg font-semibold text-base-content mb-4">Add New API Key</h2>
+
+      <%= form_with model: @proxmox_api_key, url: settings_proxmox_api_keys_path, class: "space-y-4" do |f| %>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Name -->
+          <div>
+            <%= f.label :name, "Key Name", class: "block text-sm font-medium text-base-content/80 mb-2" %>
+            <%= f.text_field :name,
+                placeholder: "Home Lab Proxmox",
+                class: "input input-bordered w-full",
+                required: true %>
+            <p class="mt-1 text-xs text-base-content/60">Descriptive name to identify this Proxmox instance</p>
+          </div>
+
+          <!-- Proxmox URL -->
+          <div>
+            <%= f.label :proxmox_url, "Proxmox URL", class: "block text-sm font-medium text-base-content/80 mb-2" %>
+            <%= f.text_field :proxmox_url,
+                placeholder: "https://pve-1.fritz.box:8006",
+                class: "input input-bordered w-full",
+                required: true %>
+            <p class="mt-1 text-xs text-base-content/60">Full URL with port (e.g., https://hostname:8006)</p>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Username -->
+          <div>
+            <%= f.label :username, "Username", class: "block text-sm font-medium text-base-content/80 mb-2" %>
+            <%= f.text_field :username,
+                placeholder: "root@pam",
+                class: "input input-bordered w-full",
+                required: true %>
+            <p class="mt-1 text-xs text-base-content/60">Format: username@realm (e.g., root@pam, api@pve)</p>
+          </div>
+
+          <!-- Realm -->
+          <div>
+            <%= f.label :realm, "Realm", class: "block text-sm font-medium text-base-content/80 mb-2" %>
+            <%= f.select :realm,
+                options_for_select([['PAM (Linux)', 'pam'], ['PVE (Proxmox VE)', 'pve'], ['LDAP', 'ldap'], ['Active Directory', 'ad']], 'pam'),
+                {},
+                class: "select select-bordered w-full" %>
+            <p class="mt-1 text-xs text-base-content/60">Authentication realm (usually PAM)</p>
+          </div>
+        </div>
+
+        <!-- API Token -->
+        <div>
+          <%= f.label :api_token, "API Token", class: "block text-sm font-medium text-base-content/80 mb-2" %>
+          <%= f.password_field :api_token,
+              placeholder: "PVEAPIToken=username@realm!tokenid=secret-value",
+              class: "input input-bordered w-full",
+              required: true %>
+          <p class="mt-1 text-xs text-error">
+            This token will be encrypted and stored securely. Format: tokenid=secret or full PVEAPIToken string.
+          </p>
+        </div>
+
+        <!-- Notes -->
+        <div>
+          <%= f.label :notes, "Notes (Optional)", class: "block text-sm font-medium text-base-content/80 mb-2" %>
+          <%= f.text_area :notes,
+              placeholder: "Additional notes about this Proxmox instance...",
+              rows: 2,
+              class: "textarea textarea-bordered w-full" %>
+        </div>
+
+        <!-- Checkboxes -->
+        <div class="space-y-2">
+          <div class="flex items-center">
+            <%= f.check_box :verify_ssl, checked: true, class: "checkbox checkbox-primary" %>
+            <%= f.label :verify_ssl, "Verify SSL Certificate", class: "ml-2 block text-sm text-base-content/80" %>
+            <span class="ml-2 text-xs text-base-content/60">(Recommended for production)</span>
+          </div>
+          <div class="flex items-center">
+            <%= f.check_box :enabled, checked: true, class: "checkbox checkbox-primary" %>
+            <%= f.label :enabled, "Enable this API key", class: "ml-2 block text-sm text-base-content/80" %>
+          </div>
+        </div>
+
+        <%= f.submit "Add API Key", class: "btn btn-primary" %>
+      <% end %>
+    </div>
+
+    <!-- Existing API Keys -->
+    <div class="bg-base-200 border border-base-content/10 rounded-lg shadow-lg p-6">
+      <h2 class="text-lg font-semibold text-base-content mb-4">Existing API Keys</h2>
+
+      <% if @proxmox_api_keys.any? %>
+        <div class="space-y-4">
+          <% @proxmox_api_keys.each do |api_key| %>
+            <div class="border border-base-content/10 rounded-lg p-4 <%= api_key.enabled? ? 'bg-base-300' : 'bg-base-200' %>">
+              <div class="flex items-start justify-between">
+                <div class="flex-1">
+                  <div class="flex items-center space-x-3 mb-2">
+                    <h3 class="text-lg font-semibold text-base-content"><%= api_key.name %></h3>
+                    <span class="badge <%= api_key.enabled? ? 'badge-success' : 'badge-ghost' %>">
+                      <%= api_key.enabled? ? 'Enabled' : 'Disabled' %>
+                    </span>
+                  </div>
+
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm text-base-content/60 mb-3">
+                    <div>
+                      <span class="font-medium">Proxmox URL:</span>
+                      <%= api_key.proxmox_url %>
+                    </div>
+                    <div>
+                      <span class="font-medium">Username:</span>
+                      <%= api_key.username %>
+                    </div>
+                    <div>
+                      <span class="font-medium">Realm:</span>
+                      <%= api_key.realm.upcase %>
+                    </div>
+                    <div>
+                      <span class="font-medium">SSL Verify:</span>
+                      <%= api_key.verify_ssl? ? 'Yes' : 'No' %>
+                    </div>
+                    <div>
+                      <span class="font-medium">Created:</span>
+                      <%= time_ago_in_words(api_key.created_at) %> ago
+                    </div>
+                    <div>
+                      <span class="font-medium">Last Used:</span>
+                      <%= api_key.last_used_at ? time_ago_in_words(api_key.last_used_at) + ' ago' : 'Never' %>
+                    </div>
+                    <div class="md:col-span-2">
+                      <span class="font-medium">API Token:</span>
+                      <span class="font-mono text-xs"><%= api_key.formatted_token %></span>
+                    </div>
+                    <div class="md:col-span-2">
+                      <span class="font-medium">Servers Using This Key:</span>
+                      <%= api_key.server_count %> server(s)
+                    </div>
+                  </div>
+
+                  <% if api_key.notes.present? %>
+                    <div class="text-sm text-base-content/60 italic mb-3">
+                      <span class="font-medium">Notes:</span> <%= api_key.notes %>
+                    </div>
+                  <% end %>
+
+                  <!-- Action Buttons -->
+                  <div class="flex space-x-2">
+                    <%= button_to "Test Connection", test_settings_proxmox_api_key_path(api_key),
+                        method: :post,
+                        class: "btn btn-primary btn-sm",
+                        onclick: "testProxmoxApiKey(event, '#{api_key.id}'); return false;" %>
+
+                    <%= button_to api_key.enabled? ? 'Disable' : 'Enable',
+                        toggle_settings_proxmox_api_key_path(api_key),
+                        method: :post,
+                        class: "btn btn-sm #{api_key.enabled? ? 'btn-warning' : 'btn-success'}" %>
+
+                    <%= button_to "Delete", settings_proxmox_api_key_path(api_key),
+                        method: :delete,
+                        class: "btn btn-error btn-sm",
+                        data: { confirm: "Are you sure? This will remove the API key. Servers using this key will lose Proxmox control." } %>
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+      <% else %>
+        <div class="text-center py-8 text-base-content/60">
+          <p class="mb-2">No API keys configured yet.</p>
+          <p class="text-sm">Add your first Proxmox API key above to enable VM/LXC management.</p>
+        </div>
+      <% end %>
+    </div>
+
+  </div>
+
+  <script>
+    function testProxmoxApiKey(event, apiKeyId) {
+      event.preventDefault();
+
+      if (!confirm('Test connection to Proxmox API?')) {
+        return;
+      }
+
+      const button = event.target;
+      const originalText = button.textContent;
+      button.textContent = 'Testing...';
+      button.disabled = true;
+
+      fetch(`/settings/proxmox_api_keys/${apiKeyId}/test`, {
+        method: 'POST',
+        headers: {
+          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content,
+          'Content-Type': 'application/json'
+        }
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          let message = 'Connection successful!\n\n';
+          if (data.data) {
+            message += `Proxmox Version: ${data.data.version || 'N/A'}\n`;
+            message += `Nodes: ${data.data.nodes ? data.data.nodes.join(', ') : 'N/A'}`;
+          } else {
+            message += data.message;
+          }
+          alert(message);
+        } else {
+          alert('Connection failed: ' + data.message);
+        }
+      })
+      .catch(error => {
+        alert('Error: ' + error);
+      })
+      .finally(() => {
+        button.textContent = originalText;
+        button.disabled = false;
+      });
+    }
+  </script>

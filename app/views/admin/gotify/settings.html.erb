@@ -1,0 +1,287 @@
+<% content_for :head do %>
+  <title>Settings - Gotify Admin</title>
+<% end %>
+
+<%= render 'shared/navigation' %>
+
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <%= render 'admin/gotify/tabs', active: 'settings' %>
+
+    <h1 class="text-2xl font-bold text-base-content mb-6">Gotify Connection Settings</h1>
+
+    <% if flash[:success] %>
+      <div class="alert alert-success mb-6">
+        <p><%= flash[:success] %></p>
+      </div>
+    <% end %>
+    <% if flash[:warning] %>
+      <div class="alert alert-warning mb-6">
+        <p><%= flash[:warning] %></p>
+      </div>
+    <% end %>
+    <% if flash[:error] %>
+      <div class="alert alert-error mb-6">
+        <p><%= flash[:error] %></p>
+      </div>
+    <% end %>
+
+    <!-- Connection Status -->
+    <div class="bg-base-200 rounded-lg shadow p-6 mb-6">
+      <h2 class="text-lg font-semibold text-base-content mb-4">Connection Status</h2>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center">
+          <% if @connection_test[:success] %>
+            <svg class="h-8 w-8 text-success mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+            <div>
+              <p class="font-medium text-success">Connected</p>
+              <p class="text-sm text-success"><%= @connection_test[:message] %></p>
+              <% if @connection_test[:version] %>
+                <p class="text-xs text-success mt-1">Gotify v<%= @connection_test[:version] %></p>
+              <% end %>
+            </div>
+          <% else %>
+            <svg class="h-8 w-8 text-error mr-3" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+            </svg>
+            <div>
+              <p class="font-medium text-error">Not Connected</p>
+              <p class="text-sm text-error"><%= @connection_test[:message] %></p>
+            </div>
+          <% end %>
+        </div>
+        <button onclick="testConnection()" id="test-button"
+                class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-focus">
+          Test Connection
+        </button>
+      </div>
+    </div>
+
+    <!-- Configuration Form -->
+    <div class="bg-base-200 rounded-lg shadow p-6">
+      <h2 class="text-lg font-semibold text-base-content mb-4">Connection Configuration</h2>
+
+      <%= form_with url: admin_gotify_update_settings_path, method: :post, class: "space-y-6" do %>
+        <!-- ENV Override Warning -->
+        <% if [@gotify_url, @gotify_username, @gotify_password, @gotify_enabled, @gotify_ssl_verify].any? { |s| s[:source] == :env } %>
+          <div class="alert alert-warning">
+            <div class="flex">
+              <div class="flex-shrink-0">
+                <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+                </svg>
+              </div>
+              <div class="ml-3">
+                <p class="text-sm">
+                  <strong>Some settings are controlled by environment variables</strong><br>
+                  Fields marked with "Using ENV" cannot be changed here. Remove the ENV variables to use database settings.
+                </p>
+              </div>
+            </div>
+          </div>
+        <% end %>
+
+        <!-- Server URL -->
+        <div>
+          <label class="block text-sm font-medium text-base-content mb-2">
+            Gotify Server URL
+            <% if @gotify_url[:source] == :env %>
+              <span class="ml-2 badge badge-warning badge-sm font-normal">Using ENV: GOTIFY_ADMIN_URL</span>
+            <% end %>
+          </label>
+          <input type="text" name="gotify_url" value="<%= @gotify_url[:value] %>"
+                 <%= 'disabled' if @gotify_url[:source] == :env %>
+                 placeholder="http://localhost:8080"
+                 class="input input-bordered w-full focus:ring-2 focus:ring-primary focus:border-primary <%= 'bg-base-100 cursor-not-allowed' if @gotify_url[:source] == :env %>">
+          <p class="mt-1 text-sm text-base-content/40">
+            <% if @gotify_url[:source] == :env %>
+              This setting is controlled by the GOTIFY_ADMIN_URL or GOTIFY_URL environment variable.
+            <% else %>
+              The URL of your Gotify server (include http:// or https://)
+            <% end %>
+          </p>
+        </div>
+
+        <!-- Admin Username -->
+        <div>
+          <label class="block text-sm font-medium text-base-content mb-2">
+            Admin Username
+            <% if @gotify_username[:source] == :env %>
+              <span class="ml-2 badge badge-warning badge-sm font-normal">Using ENV: GOTIFY_ADMIN_USERNAME</span>
+            <% end %>
+          </label>
+          <input type="text" name="gotify_username" value="<%= @gotify_username[:value] %>"
+                 <%= 'disabled' if @gotify_username[:source] == :env %>
+                 placeholder="admin"
+                 class="input input-bordered w-full focus:ring-2 focus:ring-primary focus:border-primary <%= 'bg-base-100 cursor-not-allowed' if @gotify_username[:source] == :env %>">
+          <p class="mt-1 text-sm text-base-content/40">
+            <% if @gotify_username[:source] == :env %>
+              This setting is controlled by the GOTIFY_ADMIN_USERNAME environment variable.
+            <% else %>
+              Username of Gotify admin account (required for full API access)
+            <% end %>
+          </p>
+        </div>
+
+        <!-- Admin Password -->
+        <div>
+          <label class="block text-sm font-medium text-base-content mb-2">
+            Admin Password
+            <% if @gotify_password[:source] == :env %>
+              <span class="ml-2 badge badge-warning badge-sm font-normal">Using ENV: GOTIFY_ADMIN_PASSWORD</span>
+            <% end %>
+          </label>
+          <input type="password" name="gotify_password" value="<%= @gotify_password[:value] %>"
+                 <%= 'disabled' if @gotify_password[:source] == :env %>
+                 placeholder="••••••••"
+                 class="input input-bordered w-full focus:ring-2 focus:ring-primary focus:border-primary <%= 'bg-base-100 cursor-not-allowed' if @gotify_password[:source] == :env %>">
+          <p class="mt-1 text-sm text-base-content/40">
+            <% if @gotify_password[:source] == :env %>
+              This setting is controlled by the GOTIFY_ADMIN_PASSWORD environment variable.
+            <% else %>
+              Password for the admin account
+            <% end %>
+          </p>
+        </div>
+
+        <!-- SSL Verification -->
+        <div class="flex items-center">
+          <input type="checkbox" name="gotify_ssl_verify" value="1"
+                 <%= 'checked' if @gotify_ssl_verify[:value] %>
+                 <%= 'disabled' if @gotify_ssl_verify[:source] == :env %>
+                 id="gotify-ssl-verify"
+                 class="checkbox checkbox-primary <%= 'bg-base-100 cursor-not-allowed' if @gotify_ssl_verify[:source] == :env %>">
+          <label for="gotify-ssl-verify" class="ml-2 block text-sm text-base-content">
+            Enable SSL certificate verification (recommended)
+            <% if @gotify_ssl_verify[:source] == :env %>
+              <span class="ml-2 badge badge-warning badge-sm font-normal">Using ENV: GOTIFY_SSL_VERIFY</span>
+            <% end %>
+          </label>
+        </div>
+        <p class="ml-6 text-xs text-base-content/40">
+          <% if @gotify_ssl_verify[:source] == :env %>
+            This setting is controlled by the GOTIFY_SSL_VERIFY environment variable.
+          <% else %>
+            Disable only if using self-signed certificates for testing
+          <% end %>
+        </p>
+
+        <!-- Enable/Disable -->
+        <div class="flex items-center">
+          <input type="checkbox" name="gotify_enabled" value="1"
+                 <%= 'checked' if @gotify_enabled[:value] %>
+                 <%= 'disabled' if @gotify_enabled[:source] == :env %>
+                 id="gotify-enabled"
+                 class="checkbox checkbox-primary <%= 'bg-base-100 cursor-not-allowed' if @gotify_enabled[:source] == :env %>">
+          <label for="gotify-enabled" class="ml-2 block text-sm text-base-content">
+            Enable Gotify notifications for Server Manager
+            <% if @gotify_enabled[:source] == :env %>
+              <span class="ml-2 badge badge-warning badge-sm font-normal">Using ENV: GOTIFY_ENABLED</span>
+            <% end %>
+          </label>
+        </div>
+
+        <!-- Save Button -->
+        <div class="flex justify-end space-x-3 pt-4 border-t">
+          <%= link_to "Cancel", admin_gotify_path, class: "px-4 py-2 border border-base-content/10 rounded-lg text-base-content hover:bg-base-300" %>
+          <button type="submit"
+                  class="px-6 py-2 bg-primary text-white rounded-lg hover:bg-primary-focus font-medium">
+            Save Settings
+          </button>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Help Section -->
+    <div class="mt-8 bg-base-300 border border-base-content/10 rounded-lg p-6">
+      <h3 class="text-lg font-semibold text-base-content mb-4">Setup Instructions</h3>
+
+      <div class="space-y-4 text-sm text-base-content">
+        <div>
+          <h4 class="font-medium text-base-content mb-1">1. Install Gotify Server</h4>
+          <p>If you haven't installed Gotify yet, run the installation script:</p>
+          <pre class="mt-2 p-3 bg-base-300 text-success rounded text-xs overflow-x-auto">sudo bash /path/to/server-manager/deployment/gotify/install-gotify-baremental.sh</pre>
+        </div>
+
+        <div>
+          <h4 class="font-medium text-base-content mb-1">2. Access Gotify Web Interface</h4>
+          <p>After installation, access Gotify at <code class="px-2 py-1 bg-base-200 rounded">http://localhost:8080</code></p>
+          <p class="mt-1">Default credentials: <code class="px-2 py-1 bg-base-200 rounded">admin / admin</code></p>
+        </div>
+
+        <div>
+          <h4 class="font-medium text-base-content mb-1">3. Change Default Password</h4>
+          <p>For security, change the default admin password in Gotify's web interface.</p>
+        </div>
+
+        <div>
+          <h4 class="font-medium text-base-content mb-1">4. Configure This Page</h4>
+          <p>Enter your Gotify server URL and admin credentials above, then save.</p>
+        </div>
+
+        <div>
+          <h4 class="font-medium text-base-content mb-1">5. Test Connection</h4>
+          <p>Click "Test Connection" to verify that Server Manager can communicate with Gotify.</p>
+        </div>
+      </div>
+
+      <div class="mt-6 pt-6 border-t border-base-content/10">
+        <h4 class="font-medium text-base-content mb-2">Security Notes</h4>
+        <ul class="list-disc list-inside space-y-1 text-sm text-base-content">
+          <li>Gotify runs on localhost by default (not accessible from internet)</li>
+          <li>Admin credentials are stored securely in the database</li>
+          <li>Use a strong password for production deployments</li>
+          <li>If exposing Gotify externally, use HTTPS with a reverse proxy</li>
+        </ul>
+      </div>
+
+      <div class="mt-6 flex items-center space-x-4">
+        <a href="<%= @gotify_url[:value] %>" target="_blank" class="text-primary hover:text-primary/80 text-sm font-medium">
+          Open Gotify Web UI
+          <svg class="inline h-4 w-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+          </svg>
+        </a>
+        <a href="https://gotify.net/docs/" target="_blank" class="text-primary hover:text-primary/80 text-sm font-medium">
+          Gotify Documentation
+          <svg class="inline h-4 w-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+          </svg>
+        </a>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    async function testConnection() {
+      const button = document.getElementById('test-button');
+      const originalText = button.textContent;
+      button.disabled = true;
+      button.textContent = 'Testing...';
+
+      try {
+        const response = await fetch('<%= admin_gotify_test_connection_path %>', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+          }
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          alert('Success! ' + data.message);
+        } else {
+          alert('Connection failed: ' + data.message);
+        }
+      } catch (error) {
+        alert('Error testing connection: ' + error.message);
+      } finally {
+        button.disabled = false;
+        button.textContent = originalText;
+      }
+    }
+  </script>

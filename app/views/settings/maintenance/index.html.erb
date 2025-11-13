@@ -1,0 +1,126 @@
+<% content_for :head do %>
+  <title>Maintenance & Cleanup - Server Manager</title>
+<% end %>
+
+<!-- Shared Navigation -->
+<%= render 'shared/navigation' %>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Settings Tabs -->
+    <div class="mb-6 border-b border-base-content/10">
+      <nav class="-mb-px flex space-x-8">
+        <%= link_to settings_backups_path, class: "border-b-2 border-transparent py-4 px-1 text-sm font-medium text-base-content/60 hover:text-base-content/80 hover:border-base-content/20" do %>
+          Borg Backup
+        <% end %>
+        <%= link_to settings_hetzner_api_keys_path, class: "border-b-2 border-transparent py-4 px-1 text-sm font-medium text-base-content/60 hover:text-base-content/80 hover:border-base-content/20" do %>
+          Hetzner API Keys
+        <% end %>
+        <%= link_to settings_maintenance_path, class: "border-b-2 border-primary py-4 px-1 text-sm font-medium text-primary" do %>
+          Maintenance
+        <% end %>
+      </nav>
+    </div>
+
+    <!-- Flash Messages -->
+    <% if flash[:notice] || flash[:success] %>
+      <div class="alert alert-success mb-6">
+        <p><%= flash[:notice] || flash[:success] %></p>
+      </div>
+    <% end %>
+    <% if flash[:alert] || flash[:error] %>
+      <div class="alert alert-error mb-6">
+        <p><%= flash[:alert] || flash[:error] %></p>
+      </div>
+    <% end %>
+
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-3xl font-bold text-base-content">Maintenance & Cleanup</h1>
+      <p class="text-base-content/60 mt-1">Manage and cleanup old commands and executions</p>
+    </div>
+
+    <!-- Statistics Summary -->
+    <div class="bg-base-200 border border-base-content/10 rounded-lg shadow-lg p-6 mb-8">
+      <h2 class="text-lg font-semibold text-base-content mb-4">Database Statistics</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="border border-base-content/10 rounded-lg p-4">
+          <div class="text-sm text-base-content/60">Total Commands</div>
+          <div class="text-2xl font-bold text-base-content"><%= number_with_delimiter(@total_commands) %></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Cleanup Actions -->
+    <div class="bg-base-200 border border-base-content/10 rounded-lg shadow-lg p-6 mb-8">
+      <h2 class="text-lg font-semibold text-base-content mb-4">Cleanup Actions</h2>
+
+      <div class="space-y-6">
+
+        <!-- Clear Failed Commands (Last 7 Days) -->
+        <div class="border border-error bg-base-200 rounded-lg p-6">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <h3 class="text-base font-semibold text-base-content mb-2">Clear Failed Commands (Last 7 Days)</h3>
+              <p class="text-sm text-base-content/80 mb-3">
+                Delete all failed and timeout commands from the last 7 days. This clears the "Failed Commands" widget on the dashboard.
+              </p>
+              <div class="flex items-center space-x-4 text-sm">
+                <span class="badge badge-error">
+                  <%= @failed_commands_count %> failed command<%= @failed_commands_count == 1 ? '' : 's' %>
+                </span>
+                <span class="text-base-content/60">Will be deleted</span>
+              </div>
+            </div>
+            <div class="ml-6">
+              <%= button_to "Clear Failed Commands",
+                  settings_clear_failed_commands_maintenance_path,
+                  method: :delete,
+                  class: "btn btn-error #{@failed_commands_count.zero? ? 'btn-disabled' : ''}",
+                  disabled: @failed_commands_count.zero?,
+                  data: { confirm: "Are you sure? This will permanently delete #{@failed_commands_count} failed commands from the last 7 days." } %>
+            </div>
+          </div>
+        </div>
+
+        <!-- Clear Old Commands (30+ Days) -->
+        <div class="border border-warning bg-base-200 rounded-lg p-6">
+          <div class="flex items-start justify-between">
+            <div class="flex-1">
+              <h3 class="text-base font-semibold text-base-content mb-2">Clear Old Commands (30+ Days)</h3>
+              <p class="text-sm text-base-content/80 mb-3">
+                Delete all command records older than 30 days. This includes successful, failed, and timeout commands.
+              </p>
+              <div class="flex items-center space-x-4 text-sm">
+                <span class="badge badge-warning">
+                  <%= @old_commands_count %> old command<%= @old_commands_count == 1 ? '' : 's' %>
+                </span>
+                <span class="text-base-content/60">Will be deleted</span>
+              </div>
+            </div>
+            <div class="ml-6">
+              <%= button_to "Clear Old Commands",
+                  settings_clear_old_commands_maintenance_path,
+                  method: :delete,
+                  class: "btn btn-warning #{@old_commands_count.zero? ? 'btn-disabled' : ''}",
+                  disabled: @old_commands_count.zero?,
+                  data: { confirm: "Are you sure? This will permanently delete #{@old_commands_count} commands older than 30 days. This cannot be undone!" } %>
+            </div>
+          </div>
+        </div>
+
+
+      </div>
+    </div>
+
+    <!-- Information Panel -->
+    <div class="bg-base-200 border border-primary rounded-lg p-6">
+      <h3 class="text-base font-semibold text-primary mb-2">Important Information</h3>
+      <ul class="list-disc list-inside space-y-2 text-sm text-base-content/80">
+        <li><strong class="text-base-content">Failed Commands:</strong> Safe to clear regularly. These are visible in the dashboard "Failed Commands" widget.</li>
+        <li><strong class="text-base-content">Old Commands:</strong> Clears historical audit logs. Keep for compliance if needed.</li>
+        <li><strong class="text-base-content">Backup recommendation:</strong> Consider database backups before bulk deletions.</li>
+      </ul>
+    </div>
+
+  </div>

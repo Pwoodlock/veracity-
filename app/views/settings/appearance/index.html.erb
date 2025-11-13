@@ -1,0 +1,173 @@
+<% content_for :head do %>
+  <title>Appearance Settings - Sodium</title>
+<% end %>
+
+<!-- Shared Navigation -->
+<%= render 'shared/navigation' %>
+
+  <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+    <!-- Header -->
+    <div class="mb-6">
+      <h1 class="text-3xl font-bold text-base-content">Appearance Settings</h1>
+      <p class="mt-2 text-sm text-base-content/60">Customize the look and feel of Sodium</p>
+    </div>
+
+    <!-- Flash Messages -->
+    <% if flash[:notice] %>
+      <div class="alert alert-success mb-6">
+        <%= flash[:notice] %>
+      </div>
+    <% end %>
+
+    <% if flash[:alert] %>
+      <div class="alert alert-error mb-6">
+        <%= flash[:alert] %>
+      </div>
+    <% end %>
+
+    <!-- Company Name -->
+    <div class="bg-base-200 border border-base-content/10 rounded-lg shadow-lg p-6 mb-6">
+      <h2 class="text-xl font-semibold text-base-content mb-4">Company Name</h2>
+
+      <%= form_with url: settings_update_company_name_appearance_path, method: :post, class: "space-y-4" do |f| %>
+        <div>
+          <label class="block text-sm font-medium text-base-content/80 mb-2">
+            Company or Project Name
+          </label>
+          <div class="flex gap-4">
+            <%= text_field_tag :company_name, @company_name,
+                placeholder: "Sodium",
+                class: "input input-bordered flex-1" %>
+            <%= f.submit "Update", class: "btn btn-primary cursor-pointer" %>
+          </div>
+          <p class="mt-2 text-sm text-base-content/60">
+            This name will appear in the navigation bar and on the login screen
+          </p>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Tagline -->
+    <div class="bg-base-200 border border-base-content/10 rounded-lg shadow-lg p-6 mb-6">
+      <h2 class="text-xl font-semibold text-base-content mb-4">Tagline</h2>
+
+      <%= form_with url: settings_update_tagline_appearance_path, method: :post, class: "space-y-4" do |f| %>
+        <div>
+          <label class="block text-sm font-medium text-base-content/80 mb-2">
+            Login Page Tagline
+          </label>
+          <div class="flex gap-4">
+            <%= text_field_tag :tagline, @tagline,
+                placeholder: "Universal server management with SaltStack",
+                class: "input input-bordered flex-1" %>
+            <%= f.submit "Update", class: "btn btn-primary cursor-pointer" %>
+          </div>
+          <p class="mt-2 text-sm text-base-content/60">
+            This tagline will appear below your logo on the login and 2FA screens
+          </p>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Logo Upload -->
+    <div class="bg-base-200 border border-base-content/10 rounded-lg shadow-lg p-6">
+      <h2 class="text-xl font-semibold text-base-content mb-4">Custom Logo</h2>
+
+      <!-- Current Logo Preview -->
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-base-content/80 mb-2">Current Logo</label>
+        <div class="border border-base-content/10 rounded-lg p-4 bg-base-300">
+          <% if @custom_logo.present? %>
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-4">
+                <img src="<%= @custom_logo %>" alt="Custom Logo" class="h-12 w-auto">
+                <span class="text-sm text-base-content/60">Custom logo active</span>
+              </div>
+              <%= button_to "Remove Logo", settings_remove_logo_appearance_path,
+                  method: :delete,
+                  data: { confirm: "Remove custom logo and use default?" },
+                  class: "btn btn-error btn-sm" %>
+            </div>
+          <% else %>
+            <div class="flex items-center space-x-4">
+              <img src="https://docs.saltproject.io/salt/install-guide/en/latest/_static/SaltProject_altlogo_blue.png"
+                   alt="Default Logo"
+                   class="h-12 w-auto">
+              <span class="text-sm text-base-content/60">Using default Salt Project logo</span>
+            </div>
+          <% end %>
+        </div>
+      </div>
+
+      <!-- Upload New Logo -->
+      <%= form_with url: settings_update_logo_appearance_path, method: :post, multipart: true, class: "space-y-4" do |f| %>
+        <div>
+          <label class="block text-sm font-medium text-base-content/80 mb-2">
+            Upload New Logo
+          </label>
+
+          <div class="flex items-center justify-center w-full">
+            <label class="flex flex-col items-center justify-center w-full h-32 border-2 border-base-content/20 border-dashed rounded-lg cursor-pointer bg-base-200 hover:bg-base-300">
+              <div class="flex flex-col items-center justify-center pt-5 pb-6">
+                <svg class="w-8 h-8 mb-2 text-base-content/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                </svg>
+                <p class="mb-2 text-sm text-base-content/60"><span class="font-semibold">Click to upload</span> or drag and drop</p>
+                <p class="text-xs text-base-content/60">PNG, JPG, or SVG (max 2MB)</p>
+              </div>
+              <%= file_field_tag :logo,
+                  accept: "image/png,image/jpeg,image/jpg,image/svg+xml",
+                  class: "hidden",
+                  onchange: "document.getElementById('file-name').textContent = this.files[0] ? this.files[0].name : 'No file chosen'" %>
+            </label>
+          </div>
+
+          <p id="file-name" class="mt-2 text-sm text-base-content/60">No file chosen</p>
+        </div>
+
+        <div class="alert alert-info">
+          <div class="flex">
+            <div class="flex-shrink-0">
+              <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd" />
+              </svg>
+            </div>
+            <div class="ml-3 flex-1">
+              <p class="text-sm">
+                <strong>Tips:</strong>
+              </p>
+              <ul class="mt-2 text-sm list-disc list-inside space-y-1">
+                <li>Recommended dimensions: 200x32 pixels (width x height)</li>
+                <li>PNG or SVG format recommended for transparent backgrounds</li>
+                <li>Logo will be automatically resized to fit the navigation bar (32px height)</li>
+                <li>Maximum file size: 2MB</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end">
+          <%= f.submit "Upload Logo", class: "btn btn-primary cursor-pointer" %>
+        </div>
+      <% end %>
+    </div>
+
+    <!-- Info Box -->
+    <div class="alert alert-warning mt-6">
+      <div class="flex">
+        <div class="flex-shrink-0">
+          <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd" />
+          </svg>
+        </div>
+        <div class="ml-3">
+          <p class="text-sm">
+            <strong>Note:</strong> Logo changes are visible immediately after upload.
+            All users will see the new logo on their next page load.
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </div>

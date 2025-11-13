@@ -1,0 +1,73 @@
+<div id="dashboard-stats" class="dashboard-grid mb-8">
+  <!-- Total Servers -->
+  <div class="stats shadow-lg bg-base-200 border border-base-content/10 hover:border-primary/50 transition-all">
+    <div class="stat">
+      <div class="stat-figure text-primary">
+        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"/>
+        </svg>
+      </div>
+      <div class="stat-title text-base-content/60">Total Servers</div>
+      <div class="stat-value text-primary"><%= total_servers %></div>
+      <div class="stat-desc">
+        <span class="text-success"><%= online_servers %> online</span>
+        <span class="mx-1">•</span>
+        <span class="text-error"><%= offline_servers %> offline</span>
+      </div>
+      <% if total_groups > 0 %>
+        <div class="stat-desc mt-1 text-base-content/40">
+          <%= total_groups %> groups • <%= ungrouped_servers %> ungrouped
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Commands Today -->
+  <div class="stats shadow-lg bg-base-200 border border-base-content/10 hover:border-primary/50 transition-all">
+    <div class="stat">
+      <div class="stat-figure text-secondary">
+        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+        </svg>
+      </div>
+      <div class="stat-title text-base-content/60">Commands (24h)</div>
+      <div class="stat-value text-secondary"><%= commands_today %></div>
+      <div class="stat-desc text-success">
+        <%= successful_commands %> successful
+      </div>
+    </div>
+  </div>
+
+  <!-- Failed Commands -->
+  <div class="stats shadow-lg bg-base-200 border border-base-content/10 hover:border-<%= failed_commands > 0 ? 'error' : 'primary' %>/50 transition-all">
+    <div class="stat">
+      <div class="stat-figure <%= failed_commands > 0 ? 'text-error' : 'text-base-content/40' %>">
+        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+        </svg>
+      </div>
+      <div class="stat-title text-base-content/60">Failed Commands</div>
+      <div class="stat-value <%= failed_commands > 0 ? 'text-error' : 'text-base-content' %>">
+        <%= failed_commands %>
+      </div>
+      <div class="stat-desc text-base-content/60">Last 24 hours</div>
+    </div>
+  </div>
+
+  <!-- Success Rate -->
+  <% success_rate = commands_today > 0 ? ((successful_commands.to_f / commands_today * 100).round(1)) : 100 %>
+  <div class="stats shadow-lg bg-base-200 border border-base-content/10 hover:border-primary/50 transition-all">
+    <div class="stat">
+      <div class="stat-figure text-<%= success_rate >= 95 ? 'success' : success_rate >= 80 ? 'warning' : 'error' %>">
+        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+        </svg>
+      </div>
+      <div class="stat-title text-base-content/60">Success Rate</div>
+      <div class="stat-value text-<%= success_rate >= 95 ? 'success' : success_rate >= 80 ? 'warning' : 'error' %>">
+        <%= success_rate %>%
+      </div>
+      <div class="stat-desc text-base-content/60">Last 24 hours</div>
+    </div>
+  </div>
+</div>
