@@ -144,23 +144,26 @@ install_ruby() {
 
   info "This may take 10-15 minutes..."
 
+  # Helper to run commands with rbenv loaded
+  local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
+
   # Check if Ruby version is already installed
-  if sudo -u "${DEPLOY_USER}" bash -lc "rbenv versions | grep -q ${RUBY_VERSION}"; then
+  if sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} rbenv versions | grep -q ${RUBY_VERSION}" 2>/dev/null; then
     info "Ruby ${RUBY_VERSION} already installed"
   else
     # Install Ruby with jemalloc for better memory performance
-    if ! sudo -u "${DEPLOY_USER}" bash -lc "RUBY_CONFIGURE_OPTS='--with-jemalloc' rbenv install ${RUBY_VERSION}" >> "${LOG_FILE}" 2>&1; then
+    if ! sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} RUBY_CONFIGURE_OPTS='--with-jemalloc' rbenv install ${RUBY_VERSION}" >> "${LOG_FILE}" 2>&1; then
       warning "Failed to install with jemalloc, trying without..."
-      execute sudo -u "${DEPLOY_USER}" bash -lc "rbenv install ${RUBY_VERSION}"
+      execute sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} rbenv install ${RUBY_VERSION}"
     fi
     success "Ruby ${RUBY_VERSION} installed"
   fi
 
   # Set global Ruby version
-  execute sudo -u "${DEPLOY_USER}" bash -lc "rbenv global ${RUBY_VERSION}"
+  execute sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} rbenv global ${RUBY_VERSION}"
 
   # Rehash rbenv
-  execute sudo -u "${DEPLOY_USER}" bash -lc "rbenv rehash"
+  execute sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} rbenv rehash"
 
   success "Ruby ${RUBY_VERSION} set as global version"
 }
@@ -171,8 +174,10 @@ install_ruby() {
 install_bundler() {
   step "Installing bundler..."
 
-  execute sudo -u "${DEPLOY_USER}" bash -lc "gem install bundler --no-document"
-  execute sudo -u "${DEPLOY_USER}" bash -lc "rbenv rehash"
+  local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
+
+  execute sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} gem install bundler --no-document"
+  execute sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} rbenv rehash"
 
   success "Bundler installed"
 }
@@ -183,20 +188,22 @@ install_bundler() {
 verify_ruby() {
   step "Verifying Ruby installation..."
 
+  local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
+
   local ruby_version
-  ruby_version=$(sudo -u "${DEPLOY_USER}" bash -lc "ruby -v")
+  ruby_version=$(sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} ruby -v")
   info "Ruby version: ${ruby_version}"
 
   local gem_version
-  gem_version=$(sudo -u "${DEPLOY_USER}" bash -lc "gem -v")
+  gem_version=$(sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} gem -v")
   info "RubyGems version: ${gem_version}"
 
   local bundler_version
-  bundler_version=$(sudo -u "${DEPLOY_USER}" bash -lc "bundler -v")
+  bundler_version=$(sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} bundler -v")
   info "Bundler version: ${bundler_version}"
 
   # Verify correct Ruby version
-  if sudo -u "${DEPLOY_USER}" bash -lc "ruby -v" | grep -q "${RUBY_VERSION}"; then
+  if sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} ruby -v" | grep -q "${RUBY_VERSION}"; then
     success "Ruby ${RUBY_VERSION} verified successfully"
   else
     fatal "Ruby version mismatch"
