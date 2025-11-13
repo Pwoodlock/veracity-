@@ -23,6 +23,20 @@ readonly DEPLOY_USER="deploy"
 install_python() {
   step "Installing Python 3 and virtual environment support..."
 
+  # Detect OS if not already set (handles resume scenario)
+  if [ -z "${OS_ID:-}" ]; then
+    info "OS not detected, detecting now..."
+    if [ -f /etc/os-release ]; then
+      # shellcheck source=/dev/null
+      . /etc/os-release
+      export OS_ID="$ID"
+      export OS_NAME="$NAME"
+      export OS_VERSION="${VERSION_ID:-unknown}"
+    else
+      fatal "Cannot detect operating system. /etc/os-release not found."
+    fi
+  fi
+
   case "${OS_ID}" in
     ubuntu|debian)
       install_packages python3 python3-venv python3-pip python3-full
