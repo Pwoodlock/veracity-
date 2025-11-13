@@ -16,7 +16,7 @@ source "${SCRIPT_DIR}/lib/validators.sh"
 # Application configuration
 readonly APP_DIR="/opt/server-manager"
 readonly DEPLOY_USER="deploy"
-readonly REPO_URL="${REPO_URL:-https://github.com/Pwoodlock/veracity.git}"
+readonly REPO_URL="${REPO_URL:-https://github.com/Pwoodlock/veracity-.git}"
 readonly REPO_BRANCH="${REPO_BRANCH:-main}"
 
 #######################################
