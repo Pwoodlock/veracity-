@@ -397,6 +397,10 @@ setup_caddy() {
     fatal "ADMIN_EMAIL environment variable is required"
   fi
 
+  if [ -z "${GOTIFY_HOST:-}" ]; then
+    fatal "GOTIFY_HOST environment variable is required"
+  fi
+
   install_caddy
   create_caddy_log_dir
   generate_caddyfile

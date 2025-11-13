@@ -9,7 +9,7 @@ set -euo pipefail
 # Source common functions
 SERVICE_SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=./lib/common.sh
-source "${SCRIPT_DIR}/lib/common.sh"
+source "${SERVICE_SCRIPT_DIR}/lib/common.sh"
 
 #######################################
 # Install UFW if needed

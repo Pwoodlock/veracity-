@@ -228,16 +228,23 @@ setup_database() {
 
   cd "${APP_DIR}"
 
-  # Load environment and run database setup
-  info "Creating database schema..."
+  # Create database first
+  info "Creating database..."
+  if ! sudo -u "${DEPLOY_USER}" bash -lc "cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:create" >> "${LOG_FILE}" 2>&1; then
+    fatal "Failed to create database. Check ${LOG_FILE} for details"
+  fi
+  success "Database created"
 
-  if ! sudo -u "${DEPLOY_USER}" bash -lc "cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:create db:schema:load" >> "${LOG_FILE}" 2>&1; then
+  # Load schema or run migrations
+  info "Loading database schema..."
+  if ! sudo -u "${DEPLOY_USER}" bash -lc "cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:schema:load" >> "${LOG_FILE}" 2>&1; then
     # Try with migrations if schema load fails
     warning "Schema load failed, trying with migrations..."
-    if ! sudo -u "${DEPLOY_USER}" bash -lc "cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:create db:migrate" >> "${LOG_FILE}" 2>&1; then
-      fatal "Failed to setup database. Check ${LOG_FILE} for details"
+    if ! sudo -u "${DEPLOY_USER}" bash -lc "cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:migrate" >> "${LOG_FILE}" 2>&1; then
+      fatal "Failed to setup database schema. Check ${LOG_FILE} for details"
     fi
   fi
+  success "Database schema loaded"
 
   # Load seeds if present
   if [ -f "${APP_DIR}/db/seeds.rb" ]; then
@@ -288,10 +295,10 @@ create_admin_user() {
     end
   "
 
-  if sudo -u "${DEPLOY_USER}" bash -lc "cd ${APP_DIR} && RAILS_ENV=production bundle exec rails runner \"${create_admin_script}\"" >> "${LOG_FILE}" 2>&1; then
+  if timeout 60 sudo -u "${DEPLOY_USER}" bash -lc "cd ${APP_DIR} && RAILS_ENV=production bundle exec rails runner \"${create_admin_script}\"" >> "${LOG_FILE}" 2>&1; then
     success "Admin user created: ${ADMIN_EMAIL}"
   else
-    warning "Failed to create admin user automatically"
+    warning "Failed to create admin user automatically (timed out or error occurred)"
     warning "You can create it manually after installation via Rails console"
   fi
 }
@@ -367,7 +374,7 @@ setup_application() {
 # If script is executed directly, run setup
 if [[ "${BASH_SOURCE[0]}" == "${0}" ]]; then
   # Validate required environment variables
-  local required_vars=(
+  required_vars=(
     "SECRET_KEY_BASE"
     "DB_USER"
     "DB_PASSWORD"

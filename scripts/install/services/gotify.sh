@@ -70,6 +70,23 @@ install_docker() {
   else
     fatal "Failed to start Docker"
   fi
+
+  # Wait for Docker to be fully ready
+  info "Waiting for Docker to be fully ready..."
+  local max_attempts=10
+  local attempt=0
+  while [ $attempt -lt $max_attempts ]; do
+    if docker info >/dev/null 2>&1; then
+      success "Docker is ready"
+      break
+    fi
+    attempt=$((attempt + 1))
+    sleep 2
+  done
+
+  if [ $attempt -eq $max_attempts ]; then
+    fatal "Docker failed to become ready after ${max_attempts} attempts"
+  fi
 }
 
 #######################################

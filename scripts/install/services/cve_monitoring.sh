@@ -44,7 +44,16 @@ install_python() {
 
   local python_version
   python_version=$(python3 --version 2>&1 | awk '{print $2}')
-  success "Python ${python_version} installed"
+
+  # Verify Python version >= 3.8 (required for PyVulnerabilityLookup)
+  local major=$(echo "$python_version" | cut -d. -f1)
+  local minor=$(echo "$python_version" | cut -d. -f2)
+
+  if [ "$major" -lt 3 ] || ([ "$major" -eq 3 ] && [ "$minor" -lt 8 ]); then
+    fatal "Python 3.8+ required for PyVulnerabilityLookup, found: ${python_version}"
+  fi
+
+  success "Python ${python_version} installed (>= 3.8 required)"
 }
 
 #######################################

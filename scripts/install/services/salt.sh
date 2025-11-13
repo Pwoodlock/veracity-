@@ -14,94 +14,60 @@ source "${SERVICE_SCRIPT_DIR}/../lib/common.sh"
 source "${SERVICE_SCRIPT_DIR}/../lib/validators.sh"
 
 #######################################
-# Install SaltStack
+# Install SaltStack using official bootstrap script
 # Globals:
-#   OS_ID, OS_VERSION
+#   OS_ID
 # Returns:
 #   0 on success, 1 on failure
 #######################################
 install_salt() {
   section "Installing SaltStack"
 
-  case "${OS_ID:-ubuntu}" in
+  # Validate OS_ID is set
+  if [ -z "${OS_ID:-}" ]; then
+    fatal "OS_ID environment variable not set. Run detect_os first."
+  fi
+
+  step "Installing SaltStack via official bootstrap script..."
+
+  # Install prerequisite packages
+  info "Installing prerequisites..."
+  case "${OS_ID}" in
     ubuntu|debian)
-      install_salt_debian
+      install_packages curl gnupg python3-cherrypy3
       ;;
     rocky|almalinux|rhel)
-      install_salt_rhel
+      install_packages curl gnupg python3-cherrypy
       ;;
     *)
-      fatal "Unsupported OS for Salt installation: ${OS_ID:-unknown}"
-      ;;
-  esac
-}
-
-#######################################
-# Install Salt on Debian/Ubuntu
-#######################################
-install_salt_debian() {
-  step "Installing SaltStack for Debian/Ubuntu..."
-
-  # Add Salt repository
-  info "Adding Salt repository..."
-
-  # Install required packages for repository
-  install_packages curl gnupg
-
-  # Add Salt GPG key
-  execute curl -fsSL https://packages.broadcom.com/artifactory/api/security/keypair/SaltProjectKey/public \
-    -o /usr/share/keyrings/salt-archive-keyring.pgp
-
-  # Add Salt repository
-  case "${OS_VERSION:-24.04}" in
-    22.04)
-      echo "deb [signed-by=/usr/share/keyrings/salt-archive-keyring.pgp arch=amd64] https://packages.broadcom.com/artifactory/saltproject-deb/ stable main" \
-        > /etc/apt/sources.list.d/salt.list
-      ;;
-    24.04)
-      echo "deb [signed-by=/usr/share/keyrings/salt-archive-keyring.pgp arch=amd64] https://packages.broadcom.com/artifactory/saltproject-deb/ stable main" \
-        > /etc/apt/sources.list.d/salt.list
-      ;;
-    *)
-      # Debian or other Ubuntu versions
-      echo "deb [signed-by=/usr/share/keyrings/salt-archive-keyring.pgp arch=amd64] https://packages.broadcom.com/artifactory/saltproject-deb/ stable main" \
-        > /etc/apt/sources.list.d/salt.list
+      fatal "Unsupported OS for Salt installation: ${OS_ID}"
       ;;
   esac
 
-  # Update package lists
-  execute apt-get update -qq
+  # Download official Salt bootstrap script (stable branch)
+  info "Downloading Salt bootstrap script..."
+  execute curl -L https://bootstrap.saltproject.io/stable -o /tmp/bootstrap-salt.sh
 
-  # Install Salt Master and API
-  spinner "Installing Salt Master and API" install_packages \
-    salt-master salt-api
+  # Install Salt Master and Salt API (without starting services yet)
+  # -M = Install Salt Master
+  # -N = Do NOT install Salt Minion
+  # -X = Do NOT start services (we'll start them with proper config)
+  info "Running Salt bootstrap (this may take a few minutes)..."
+  spinner "Installing Salt Master and API" execute sh /tmp/bootstrap-salt.sh -M -N -X
 
-  success "Salt packages installed"
-}
+  # Clean up bootstrap script
+  execute rm -f /tmp/bootstrap-salt.sh
 
-#######################################
-# Install Salt on RHEL/Rocky
-#######################################
-install_salt_rhel() {
-  step "Installing SaltStack for RHEL/Rocky..."
+  success "Salt packages installed via official bootstrap"
 
-  # Add Salt repository
-  info "Adding Salt repository..."
-
-  cat > /etc/yum.repos.d/salt.repo << EOF
-[salt-repo]
-name=Salt Repository
-baseurl=https://packages.broadcom.com/artifactory/saltproject-rpm/
-gpgcheck=1
-gpgkey=https://packages.broadcom.com/artifactory/api/security/keypair/SaltProjectKey/public
-enabled=1
-EOF
-
-  # Install Salt Master and API
-  spinner "Installing Salt Master and API" install_packages \
-    salt-master salt-api
-
-  success "Salt packages installed"
+  # Verify installation
+  if command -v salt-master >/dev/null 2>&1 && command -v salt-api >/dev/null 2>&1; then
+    local salt_version
+    salt_version=$(salt --version 2>/dev/null | head -1 || echo "unknown")
+    info "Salt version: ${salt_version}"
+  else
+    fatal "Salt installation failed - salt-master or salt-api not found"
+  fi
 }
 
 #######################################
@@ -117,8 +83,9 @@ create_salt_api_user() {
   step "Creating Salt API user: ${username}..."
 
   # Create system user for Salt API
+  # NOTE: Using /bin/bash instead of /sbin/nologin to allow PAM authentication
   if ! user_exists "${username}"; then
-    execute useradd -r -s /sbin/nologin -c "Salt API User" "${username}"
+    execute useradd -r -s /bin/bash -c "Salt API User" "${username}"
     success "Created system user: ${username}"
   else
     info "User ${username} already exists"
@@ -126,6 +93,19 @@ create_salt_api_user() {
 
   # Set password for PAM authentication
   echo "${username}:${password}" | execute chpasswd
+
+  # Configure PAM authentication for salt-api
+  if [ ! -f /etc/pam.d/salt-api ]; then
+    info "Configuring PAM authentication for salt-api..."
+    cat > /etc/pam.d/salt-api << 'PAMEOF'
+auth       include      system-auth
+account    required     pam_nologin.so
+account    include      system-auth
+password   include      system-auth
+session    include      system-auth
+PAMEOF
+    success "PAM configuration created for salt-api"
+  fi
 
   success "Salt API user configured"
 }
@@ -244,18 +224,35 @@ create_salt_directories() {
 start_salt_services() {
   step "Starting Salt services..."
 
-  # Ensure Salt API has proper systemd dependency on Salt Master
+  # Ensure Salt API has proper systemd configuration
   mkdir -p /etc/systemd/system/salt-api.service.d
   cat > /etc/systemd/system/salt-api.service.d/override.conf << EOF
 [Unit]
-After=salt-master.service
+Description=Salt API Service
+After=salt-master.service network-online.target
+Wants=network-online.target
 Requires=salt-master.service
 
 [Service]
-# Give Salt Master time to be ready
-ExecStartPre=/bin/sleep 5
-Restart=on-failure
+Type=simple
+User=root
+Group=root
+# Ensure CherryPy runs in foreground
+Environment="PYTHONUNBUFFERED=1"
+# Give Salt Master time to be fully ready
+ExecStartPre=/bin/sleep 10
+ExecStart=/usr/bin/salt-api
+Restart=always
 RestartSec=10
+StartLimitInterval=0
+# Increase timeout for CherryPy startup
+TimeoutStartSec=90
+TimeoutStopSec=30
+# Ensure service stays running
+RemainAfterExit=no
+
+[Install]
+WantedBy=multi-user.target
 EOF
 
   execute systemctl daemon-reload
