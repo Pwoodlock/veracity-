@@ -224,7 +224,8 @@ install_node_packages() {
   local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
 
   # Install packages as deploy user
-  if ! sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && yarn install --frozen-lockfile" >> "${LOG_FILE}" 2>&1; then
+  # COREPACK_ENABLE_DOWNLOAD_PROMPT=0 disables interactive Corepack prompts
+  if ! sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && COREPACK_ENABLE_DOWNLOAD_PROMPT=0 yarn install --frozen-lockfile" >> "${LOG_FILE}" 2>&1; then
     fatal "Failed to install Node packages. Check ${LOG_FILE} for details"
   fi
 
