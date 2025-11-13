@@ -139,7 +139,7 @@ fatal() {
 #######################################
 prompt() {
   local prompt_msg="$1"
-  local default_value="$2"
+  local default_value="${2:-}"
   local user_input
 
   if [[ -n "$default_value" ]]; then
