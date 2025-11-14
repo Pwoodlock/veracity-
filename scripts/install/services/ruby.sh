@@ -29,30 +29,29 @@ add_fullstaq_repo_debian() {
   install_packages ca-certificates curl gnupg apt-transport-https
 
   # Add Fullstaq Ruby GPG key with retry logic
-  local gpg_url="https://raw.githubusercontent.com/fullstaq-labs/fullstaq-ruby-server-edition/main/fullstaq-ruby.asc"
-  local gpg_tmp="/tmp/fullstaq-ruby.asc"
+  # For Ubuntu ≥24.04 and Debian ≥12, key goes in /etc/apt/fullstaq-ruby.asc
+  local gpg_url="https://raw.githubusercontent.com/fullstaq-ruby/server-edition/main/fullstaq-ruby.asc"
+  local gpg_file="/etc/apt/fullstaq-ruby.asc"
   local max_attempts=3
   local attempt=1
 
   while [ $attempt -le $max_attempts ]; do
     info "Downloading Fullstaq Ruby GPG key (attempt $attempt/$max_attempts)..."
 
-    if curl -fsSL "${gpg_url}" -o "${gpg_tmp}"; then
+    if execute curl -SLfo "${gpg_file}" "${gpg_url}"; then
       # Verify we got valid GPG data using gpg itself
-      if gpg --list-packets "${gpg_tmp}" &>/dev/null; then
-        execute gpg --dearmor -o /usr/share/keyrings/fullstaq-ruby.gpg < "${gpg_tmp}"
-        rm -f "${gpg_tmp}"
+      if gpg --list-packets "${gpg_file}" &>/dev/null; then
         success "GPG key downloaded and installed"
         break
       else
         warning "Downloaded file is not valid GPG data"
+        rm -f "${gpg_file}"
       fi
     else
       warning "Failed to download GPG key"
     fi
 
     if [ $attempt -eq $max_attempts ]; then
-      rm -f "${gpg_tmp}"
       fatal "Failed to download Fullstaq Ruby GPG key after $max_attempts attempts"
     fi
 
@@ -61,14 +60,15 @@ add_fullstaq_repo_debian() {
   done
 
   # Add repository
-  # Fullstaq Ruby uses "ubuntu-VERSION" format instead of codenames
+  # Fullstaq Ruby uses "ubuntu-VERSION" format (e.g. ubuntu-24.04)
+  # Per official docs: Ubuntu ≥24.04 doesn't need [signed-by=...] in sources.list
   local ubuntu_version
   if [ -f /etc/os-release ]; then
     ubuntu_version=$(grep VERSION_ID /etc/os-release | cut -d'=' -f2 | tr -d '"')
-    echo "deb [signed-by=/usr/share/keyrings/fullstaq-ruby.gpg] https://apt.fullstaqruby.org ubuntu-${ubuntu_version} main" | tee /etc/apt/sources.list.d/fullstaq-ruby.list > /dev/null
+    echo "deb https://apt.fullstaqruby.org ubuntu-${ubuntu_version} main" | tee /etc/apt/sources.list.d/fullstaq-ruby.list > /dev/null
   else
     # Fallback to codename if VERSION_ID not found
-    echo "deb [signed-by=/usr/share/keyrings/fullstaq-ruby.gpg] https://apt.fullstaqruby.org $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/fullstaq-ruby.list > /dev/null
+    echo "deb https://apt.fullstaqruby.org $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/fullstaq-ruby.list > /dev/null
   fi
 
   # Update package lists
