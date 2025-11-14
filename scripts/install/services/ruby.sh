@@ -38,8 +38,8 @@ add_fullstaq_repo_debian() {
     info "Downloading Fullstaq Ruby GPG key (attempt $attempt/$max_attempts)..."
 
     if curl -fsSL "${gpg_url}" -o "${gpg_tmp}"; then
-      # Verify we got valid GPG data
-      if file "${gpg_tmp}" | grep -qE '(PGP|GPG)'; then
+      # Verify we got valid GPG data using gpg itself
+      if gpg --list-packets "${gpg_tmp}" &>/dev/null; then
         execute gpg --dearmor -o /usr/share/keyrings/fullstaq-ruby.gpg < "${gpg_tmp}"
         rm -f "${gpg_tmp}"
         success "GPG key downloaded and installed"
