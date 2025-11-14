@@ -37,6 +37,31 @@ install_redis() {
 }
 
 #######################################
+# Verify Redis is ready to accept connections
+# Returns:
+#   0 if ready, 1 otherwise
+#######################################
+wait_for_redis_ready() {
+  local max_attempts=15
+  local attempt=1
+
+  info "Waiting for Redis to be ready..."
+
+  while [ $attempt -le $max_attempts ]; do
+    if redis-cli ping &>> "${LOG_FILE}"; then
+      success "Redis is ready"
+      return 0
+    fi
+
+    sleep 1
+    ((attempt++))
+  done
+
+  error "Redis did not become ready within ${max_attempts} seconds"
+  return 1
+}
+
+#######################################
 # Install Redis on Debian/Ubuntu
 #######################################
 install_redis_debian() {
@@ -48,10 +73,18 @@ install_redis_debian() {
   execute systemctl start redis-server
   execute systemctl enable redis-server
 
+  # Wait for systemd service
   if wait_for_service redis-server; then
-    success "Redis installed and started"
+    info "Redis service is active"
   else
-    fatal "Failed to start Redis"
+    fatal "Failed to start Redis service"
+  fi
+
+  # Verify Redis is actually ready
+  if wait_for_redis_ready; then
+    success "Redis installed and ready"
+  else
+    fatal "Redis service started but not accepting connections"
   fi
 }
 
@@ -67,10 +100,18 @@ install_redis_rhel() {
   execute systemctl start redis
   execute systemctl enable redis
 
+  # Wait for systemd service
   if wait_for_service redis; then
-    success "Redis installed and started"
+    info "Redis service is active"
   else
-    fatal "Failed to start Redis"
+    fatal "Failed to start Redis service"
+  fi
+
+  # Verify Redis is actually ready
+  if wait_for_redis_ready; then
+    success "Redis installed and ready"
+  else
+    fatal "Redis service started but not accepting connections"
   fi
 }
 

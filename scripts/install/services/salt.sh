@@ -338,29 +338,48 @@ EOF
   info "Waiting for Salt Master to fully initialize..."
   sleep 5
 
-  # Enable and start Salt API
+  # Enable and start Salt API with retry logic (CherryPy can be slow to start)
   execute systemctl enable salt-api
-  execute systemctl start salt-api
 
-  if wait_for_service salt-api; then
-    success "Salt API service started"
-  else
-    # Salt API often fails on first start, try restarting it
-    warning "Salt API failed to start on first attempt, restarting..."
-    sleep 2
-    execute systemctl restart salt-api
-    sleep 3
+  local salt_api_attempts=0
+  local salt_api_max_attempts=3
+  local salt_api_started=false
 
-    if wait_for_service salt-api; then
-      success "Salt API started successfully after restart"
+  while [ $salt_api_attempts -lt $salt_api_max_attempts ]; do
+    info "Starting Salt API (attempt $((salt_api_attempts + 1))/${salt_api_max_attempts})..."
+
+    if [ $salt_api_attempts -gt 0 ]; then
+      # Restart on subsequent attempts
+      execute systemctl restart salt-api
     else
-      error "Salt API failed to start"
-      info "Checking Salt API status..."
-      systemctl status salt-api --no-pager -l || true
-      info "Checking Salt API logs..."
-      journalctl -u salt-api -n 30 --no-pager || true
-      fatal "Failed to start Salt API"
+      # First attempt - normal start
+      execute systemctl start salt-api
     fi
+
+    # Give Salt API time to initialize (CherryPy needs this)
+    sleep 5
+
+    if wait_for_service salt-api 60; then
+      success "Salt API service is active"
+      salt_api_started=true
+      break
+    fi
+
+    salt_api_attempts=$((salt_api_attempts + 1))
+
+    if [ $salt_api_attempts -lt $salt_api_max_attempts ]; then
+      warning "Salt API not ready, will retry after checking logs..."
+      info "Salt API status:"
+      systemctl status salt-api --no-pager -l | head -20 || true
+      sleep 3
+    fi
+  done
+
+  if [ "$salt_api_started" != "true" ]; then
+    error "Salt API failed to start after ${salt_api_max_attempts} attempts"
+    info "Checking Salt API logs:"
+    journalctl -u salt-api -n 50 --no-pager || true
+    fatal "Failed to start Salt API - check CherryPy requirements and PAM configuration"
   fi
 }
 
@@ -395,34 +414,66 @@ test_salt_api() {
     fatal "Salt API failed to start properly"
   fi
 
-  # Additional wait for API to be fully ready
-  sleep 2
+  # Additional wait for API to be fully ready (CherryPy initialization)
+  info "Waiting for CherryPy to finish initialization..."
+  sleep 5
 
-  # Test API endpoint is accessible
-  if curl -sSf "http://127.0.0.1:8001" -o /dev/null 2>&1; then
-    success "Salt API is accessible"
-  else
+  # Test API endpoint is accessible with retry
+  local api_ready=false
+  local api_attempts=0
+  local api_max_attempts=10
+
+  while [ $api_attempts -lt $api_max_attempts ]; do
+    if curl -sSf --connect-timeout 5 --max-time 10 "http://127.0.0.1:8001" -o /dev/null 2>&1; then
+      success "Salt API endpoint is accessible"
+      api_ready=true
+      break
+    fi
+
+    api_attempts=$((api_attempts + 1))
+    if [ $api_attempts -lt $api_max_attempts ]; then
+      info "Salt API not responding yet, waiting... (attempt ${api_attempts}/${api_max_attempts})"
+      sleep 3
+    fi
+  done
+
+  if [ "$api_ready" != "true" ]; then
+    error "Salt API endpoint not accessible after $((api_max_attempts * 3)) seconds"
+    error "Port is listening but CherryPy is not responding"
     fatal "Salt API is not accessible at http://127.0.0.1:8001"
   fi
 
-  # Test authentication
-  local token
-  token=$(curl -sSk "http://127.0.0.1:8001/login" \
-    -H "Accept: application/json" \
-    -d username="${SALT_API_USER}" \
-    -d password="${SALT_API_PASSWORD}" \
-    -d eauth=pam \
-    | grep -o '"token": "[^"]*"' | cut -d'"' -f4)
+  # Test authentication with retry
+  local token=""
+  local auth_attempts=0
+  local auth_max_attempts=3
 
-  if [ -n "$token" ]; then
-    success "Salt API authentication successful"
-    info "Auth token (truncated): ${token:0:20}..."
-    return 0
-  else
-    error "Salt API authentication failed"
-    error "Please check credentials and PAM configuration"
-    return 1
-  fi
+  while [ $auth_attempts -lt $auth_max_attempts ]; do
+    token=$(curl -sSk --connect-timeout 5 --max-time 10 "http://127.0.0.1:8001/login" \
+      -H "Accept: application/json" \
+      -d username="${SALT_API_USER}" \
+      -d password="${SALT_API_PASSWORD}" \
+      -d eauth=pam \
+      2>/dev/null | grep -o '"token": "[^"]*"' | cut -d'"' -f4 || true)
+
+    if [ -n "$token" ]; then
+      success "Salt API authentication successful"
+      info "Auth token (truncated): ${token:0:20}..."
+      return 0
+    fi
+
+    auth_attempts=$((auth_attempts + 1))
+    if [ $auth_attempts -lt $auth_max_attempts ]; then
+      warning "Authentication failed, retrying... (attempt ${auth_attempts}/${auth_max_attempts})"
+      sleep 2
+    fi
+  done
+
+  error "Salt API authentication failed after ${auth_max_attempts} attempts"
+  error "Please check credentials and PAM configuration"
+  info "Checking Salt API logs:"
+  journalctl -u salt-api -n 30 --no-pager || true
+  return 1
 }
 
 #######################################

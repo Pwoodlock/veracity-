@@ -300,6 +300,85 @@ execute() {
 }
 
 #######################################
+# Run command with timeout
+# Arguments:
+#   $1 - Timeout in seconds
+#   $2+ - Command to execute
+# Returns:
+#   Command exit code, or 124 if timeout
+#######################################
+run_with_timeout() {
+  local timeout_duration="$1"
+  shift
+  local cmd=("$@")
+
+  log_message "Running with ${timeout_duration}s timeout: ${cmd[*]}"
+
+  # Check if timeout command is available
+  if command_exists timeout; then
+    timeout "${timeout_duration}" "${cmd[@]}" >> "${LOG_FILE}" 2>&1
+    local exit_code=$?
+
+    if [ $exit_code -eq 124 ]; then
+      error "Command timed out after ${timeout_duration} seconds: ${cmd[*]}"
+      log_message "TIMEOUT: Command exceeded ${timeout_duration}s limit"
+    elif [ $exit_code -ne 0 ]; then
+      log_message "Command failed with exit code: ${exit_code}"
+    fi
+
+    return $exit_code
+  else
+    # Fallback: run without timeout if command not available
+    warning "timeout command not available, running without timeout"
+    "${cmd[@]}" >> "${LOG_FILE}" 2>&1
+    return $?
+  fi
+}
+
+#######################################
+# Retry command with exponential backoff
+# Arguments:
+#   $1 - Maximum number of attempts
+#   $2 - Initial delay in seconds
+#   $3+ - Command to execute
+# Returns:
+#   0 if command succeeds, 1 if all retries fail
+#######################################
+retry_command() {
+  local max_attempts="$1"
+  local initial_delay="$2"
+  shift 2
+  local cmd=("$@")
+  local attempt=1
+  local delay="$initial_delay"
+
+  log_message "Retry wrapper: max_attempts=${max_attempts}, initial_delay=${initial_delay}s"
+
+  while [ $attempt -le $max_attempts ]; do
+    log_message "Attempt ${attempt}/${max_attempts}: ${cmd[*]}"
+
+    if "${cmd[@]}" >> "${LOG_FILE}" 2>&1; then
+      if [ $attempt -gt 1 ]; then
+        success "Command succeeded on attempt ${attempt}"
+      fi
+      return 0
+    fi
+
+    if [ $attempt -lt $max_attempts ]; then
+      warning "Attempt ${attempt} failed, retrying in ${delay}s..."
+      sleep "$delay"
+      # Exponential backoff: double the delay for next attempt
+      delay=$((delay * 2))
+    else
+      error "Command failed after ${max_attempts} attempts: ${cmd[*]}"
+      return 1
+    fi
+
+    ((attempt++))
+  done
+}
+
+#######################################
 # Show spinner while command runs
 # Arguments:
 #   $1 - Message to display
@@ -616,7 +695,7 @@ export -f init_logging log_message info success warning error fatal
 export -f step section prompt prompt_password confirm
 export -f generate_password generate_secret_key_base
 export -f command_exists is_service_running is_service_enabled wait_for_service
-export -f execute spinner progress_bar
+export -f execute run_with_timeout retry_command spinner progress_bar
 export -f detect_os is_os_supported get_package_manager
 export -f update_system_packages install_packages
 export -f save_credentials print_summary

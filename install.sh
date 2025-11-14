@@ -8,19 +8,25 @@
 #        or: sudo ./install.sh --resume (to resume after fixing errors)
 #
 
-# Use safer bash settings but allow error handling
-set -uo pipefail
+# Use safer bash settings - exit on error, undefined variables, and pipe failures
+set -euo pipefail
 
 # Script directory
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# Source common functions
-# shellcheck source=scripts/install/lib/common.sh
-source "${SCRIPT_DIR}/scripts/install/lib/common.sh"
-# shellcheck source=scripts/install/lib/validators.sh
-source "${SCRIPT_DIR}/scripts/install/lib/validators.sh"
-# shellcheck source=scripts/install/lib/error_handling.sh
-source "${SCRIPT_DIR}/scripts/install/lib/error_handling.sh"
+# Source common functions with validation
+for lib_file in "common.sh" "validators.sh" "error_handling.sh"; do
+  lib_path="${SCRIPT_DIR}/scripts/install/lib/${lib_file}"
+  if [ ! -f "${lib_path}" ]; then
+    echo "ERROR: Required library file not found: ${lib_path}" >&2
+    echo "Please ensure you have the complete Veracity installation files." >&2
+    exit 1
+  fi
+  # shellcheck source=scripts/install/lib/common.sh
+  # shellcheck source=scripts/install/lib/validators.sh
+  # shellcheck source=scripts/install/lib/error_handling.sh
+  source "${lib_path}"
+done
 
 #######################################
 # Print banner
@@ -30,14 +36,14 @@ print_banner() {
   cat << 'EOF'
 ╔══════════════════════════════════════════════════════════════╗
 ║                                                              ║
-║  ██╗   ██╗███████╗██████╗  █████╗  ██████╗██╗████████╗██╗   ║
-║  ██║   ██║██╔════╝██╔══██╗██╔══██╗██╔════╝██║╚══██╔══╝╚██╗  ║
-║  ██║   ██║█████╗  ██████╔╝███████║██║     ██║   ██║    ╚██╗ ║
-║  ╚██╗ ██╔╝██╔══╝  ██╔══██╗██╔══██║██║     ██║   ██║    ██╔╝ ║
-║   ╚████╔╝ ███████╗██║  ██║██║  ██║╚██████╗██║   ██║   ██╔╝  ║
-║    ╚═══╝  ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝   ╚═╝   ╚═╝   ║
+║  ██╗   ██╗███████╗██████╗  █████╗  ██████╗██╗████████╗██╗  ██║
+║  ██║   ██║██╔════╝██╔══██╗██╔══██╗██╔════╝██║╚══██╔══╝╚██╗██ ║
+║  ██║   ██║█████╗  ██████╔╝███████║██║     ██║   ██║    ╚███  ║
+║  ╚██╗ ██╔╝██╔══╝  ██╔══██╗██╔══██║██║     ██║   ██║    ██╔╝  ║
+║   ╚████╔╝ ███████╗██║  ██║██║  ██║╚██████╗██║   ██║   ██╔╝   ║
+║    ╚═══╝  ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝╚═╝   ╚═╝   ╚═╝    ║
 ║                                                              ║
-║                    Version 1.0 Installer                     ║
+║                    Version 0.0.1-a Installer                 ║
 ║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 
@@ -53,8 +59,6 @@ EOF
   echo "  • Create systemd services"
   echo "  • Configure firewall"
   echo ""
-  echo -e "${YELLOW}Estimated time: 25-35 minutes${NC}"
-  echo ""
 }
 
 #######################################
@@ -68,7 +72,7 @@ collect_configuration() {
 
   # Domain/Host
   while true; do
-    RAILS_HOST=$(prompt "Domain or IP address (e.g., sm.example.com)" "$(hostname -I | awk '{print $1}')")
+    RAILS_HOST=$(prompt "Domain or IP address (e.g., example.ie)" "$(hostname -I | awk '{print $1}')")
     if validate_domain "${RAILS_HOST}"; then
       break
     fi
@@ -81,7 +85,7 @@ collect_configuration() {
   else
     RAILS_PROTOCOL="http"
     RAILS_FORCE_SSL="false"
-    warning "HTTPS disabled - only use for development/testing!"
+    warning "HTTPS disabled - only via your own method (e.g., OPNsense, traefik, etc ) "
   fi
 
   # Admin credentials
@@ -130,7 +134,6 @@ collect_configuration() {
   echo "  • Gotify push notifications (Docker-based)"
   echo "  • CVE vulnerability scanning (Python venv)"
   echo "  • Proxmox API support (configure in UI)"
-  echo "  • OAuth2/Zitadel SSO ready (configure in UI)"
   echo ""
   info "You can configure API keys and credentials via the web UI after installation"
   echo ""
@@ -138,7 +141,7 @@ collect_configuration() {
   # Gotify domain configuration
   echo ""
   while true; do
-    GOTIFY_HOST=$(prompt "Gotify domain or subdomain (e.g., gotify.yourserver.ie)")
+    GOTIFY_HOST=$(prompt "Gotify domain or subdomain (e.g., gotify.example.ie)")
     if validate_domain "${GOTIFY_HOST}"; then
       break
     fi
@@ -189,7 +192,6 @@ Features (All Enabled):
   ✓ Gotify push notifications (${GOTIFY_URL})
   ✓ CVE vulnerability scanning (${CVE_URL})
   ✓ Proxmox API support
-  ✓ OAuth2/Zitadel SSO ready
 
 Installation Path: /opt/veracity/app
 Deploy User:      deploy

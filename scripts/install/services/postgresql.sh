@@ -37,6 +37,35 @@ install_postgresql() {
 }
 
 #######################################
+# Verify PostgreSQL is ready to accept connections
+# Returns:
+#   0 if ready, 1 otherwise
+#######################################
+wait_for_postgresql_ready() {
+  local max_attempts=30
+  local attempt=1
+
+  info "Waiting for PostgreSQL to be ready to accept connections..."
+
+  while [ $attempt -le $max_attempts ]; do
+    if sudo -u postgres psql -c "SELECT 1" &>> "${LOG_FILE}"; then
+      success "PostgreSQL is ready"
+      return 0
+    fi
+
+    if [ $attempt -eq 1 ]; then
+      info "PostgreSQL service is starting, waiting for it to accept connections..."
+    fi
+
+    sleep 2
+    ((attempt++))
+  done
+
+  error "PostgreSQL did not become ready within $((max_attempts * 2)) seconds"
+  return 1
+}
+
+#######################################
 # Install PostgreSQL on Debian/Ubuntu
 #######################################
 install_postgresql_debian() {
@@ -50,10 +79,18 @@ install_postgresql_debian() {
   execute systemctl start postgresql
   execute systemctl enable postgresql
 
+  # Wait for systemd service
   if wait_for_service postgresql; then
-    success "PostgreSQL installed and started"
+    info "PostgreSQL service is active"
   else
-    fatal "Failed to start PostgreSQL"
+    fatal "Failed to start PostgreSQL service"
+  fi
+
+  # Verify PostgreSQL is actually ready to accept connections
+  if wait_for_postgresql_ready; then
+    success "PostgreSQL installed and ready"
+  else
+    fatal "PostgreSQL service started but not accepting connections"
   fi
 }
 
@@ -77,10 +114,18 @@ install_postgresql_rhel() {
   execute systemctl start postgresql
   execute systemctl enable postgresql
 
+  # Wait for systemd service
   if wait_for_service postgresql; then
-    success "PostgreSQL installed and started"
+    info "PostgreSQL service is active"
   else
-    fatal "Failed to start PostgreSQL"
+    fatal "Failed to start PostgreSQL service"
+  fi
+
+  # Verify PostgreSQL is actually ready to accept connections
+  if wait_for_postgresql_ready; then
+    success "PostgreSQL installed and ready"
+  else
+    fatal "PostgreSQL service started but not accepting connections"
   fi
 }
 

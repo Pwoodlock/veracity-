@@ -36,7 +36,7 @@ sudo ./scripts/install/diagnose.sh
 ## System Requirements
 
 ### Minimum Requirements
-- **OS**: Ubuntu 22.04/24.04, Debian 11/12, or Rocky Linux 9
+- **OS**: Ubuntu 22.04/24.04, Debian 11/12, or Almalinux 9
 - **CPU**: 2 cores
 - **RAM**: 2GB minimum (4GB recommended)
 - **Disk**: 10GB free space
@@ -50,7 +50,7 @@ sudo ./scripts/install/diagnose.sh
 
 ## What Gets Installed
 
-The installer sets up a complete, production-ready infrastructure management system:
+The installer sets up a complete, Veracity infrastructure management system:
 
 ### Core Services
 - **PostgreSQL 14+** - Primary database
@@ -71,7 +71,7 @@ The installer sets up a complete, production-ready infrastructure management sys
 - **CVE Monitoring** - Automatic vulnerability scanning (Python venv)
 - **Proxmox API** - Virtual machine management
 - **Hetzner Cloud API** - Cloud server management
-- **OAuth2/Zitadel** - SSO authentication ready
+- **OAuth2/Zitadel** - Roadmap
 
 ## Installation Process
 
@@ -89,7 +89,7 @@ Before running the installer, ensure:
 The installer will ask for:
 
 **Required:**
-- Domain or IP address (e.g., `sm.example.com`)
+- Domain or IP address (e.g., `example.com`)
 - Enable HTTPS? (yes/no)
 - Admin email address
 - Admin password (or auto-generate)
@@ -101,7 +101,6 @@ The installer will ask for:
 - CVE vulnerability scanning (active)
 - Proxmox API support (add tokens via UI)
 - Hetzner Cloud API support (add tokens via UI)
-- OAuth2/Zitadel SSO (configure via UI)
 
 ### 3. Installation Steps
 
@@ -136,13 +135,12 @@ After installation completes:
 4. **Configure Gotify**: Go to Settings → Notifications to add Gotify app token
 5. **Configure Proxmox**: Go to Settings → Proxmox to add API tokens
 6. **Configure Hetzner**: Go to Settings → Hetzner to add API tokens
-7. **Configure OAuth/SSO**: Go to Settings → Authentication (if needed)
-8. **Review CVE Scans**: Check Settings → Vulnerability Monitoring
-9. **Install Minions**: Run on servers you want to manage:
+7. **Review CVE Scans**: Check Settings → Vulnerability Monitoring
+8. **Install Minions**: Run on servers you want to manage:
    ```bash
    curl -sSL https://your-domain.com/install/minion.sh | sudo bash
    ```
-10. **Accept Minion Keys**: Go to Onboarding page and accept keys
+9.  **Accept Minion Keys**: Go to Onboarding page and accept keys
 
 ## File Locations
 

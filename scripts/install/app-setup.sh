@@ -200,17 +200,26 @@ EOF
 # Install Ruby gems
 #######################################
 install_gems() {
-  step "Installing Ruby gems (this may take several minutes)..."
+  step "Installing Ruby gems (this may take 5-10 minutes)..."
 
   cd "${APP_DIR}"
 
   # Helper to run commands with rbenv loaded
   local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
 
-  # Install gems as deploy user
-  # Note: Not using --deployment flag to allow Gemfile.lock updates if needed
-  if ! sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle install --jobs=4 --retry=3 --without development test" >> "${LOG_FILE}" 2>&1; then
-    fatal "Failed to install gems. Check ${LOG_FILE} for details"
+  # Install gems as deploy user with timeout and retry
+  # Bundle has built-in retry for gem downloads, but we add timeout protection
+  info "Running bundle install (timeout: 20 minutes)..."
+
+  # Use retry_command for network resilience
+  if ! retry_command 3 5 run_with_timeout 1200 sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle install --jobs=4 --retry=3 --without development test"; then
+    error "Failed to install gems after multiple attempts"
+    error "This may be due to:"
+    error "  - Network connectivity issues"
+    error "  - Gem compilation failures (check for missing system libraries)"
+    error "  - Timeout (bundle install took longer than 20 minutes)"
+    error "Check ${LOG_FILE} for detailed error messages"
+    fatal "Failed to install gems"
   fi
 
   success "Gems installed successfully"
@@ -227,10 +236,19 @@ install_node_packages() {
   # Helper to run commands with rbenv loaded
   local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
 
-  # Install packages as deploy user
+  # Install packages as deploy user with timeout and retry
   # COREPACK_ENABLE_DOWNLOAD_PROMPT=0 disables interactive Corepack prompts
-  if ! sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && COREPACK_ENABLE_DOWNLOAD_PROMPT=0 yarn install --frozen-lockfile" >> "${LOG_FILE}" 2>&1; then
-    fatal "Failed to install Node packages. Check ${LOG_FILE} for details"
+  info "Running yarn install (timeout: 10 minutes)..."
+
+  # Use retry_command for network resilience
+  if ! retry_command 3 5 run_with_timeout 600 sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && COREPACK_ENABLE_DOWNLOAD_PROMPT=0 yarn install --frozen-lockfile"; then
+    error "Failed to install Node packages after multiple attempts"
+    error "This may be due to:"
+    error "  - Network connectivity issues"
+    error "  - yarn.lock file issues (try deleting node_modules and yarn.lock)"
+    error "  - Timeout (yarn install took longer than 10 minutes)"
+    error "Check ${LOG_FILE} for detailed error messages"
+    fatal "Failed to install Node packages"
   fi
 
   success "Node packages installed successfully"
@@ -247,17 +265,49 @@ setup_database() {
   # Helper to run commands with rbenv loaded
   local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
 
+  # Verify database is ready before attempting operations
+  info "Verifying PostgreSQL is ready for connections..."
+  local db_ready=false
+  local db_attempts=0
+  local db_max_attempts=10
+
+  while [ $db_attempts -lt $db_max_attempts ]; do
+    if sudo -u postgres psql -c "SELECT 1" &>> "${LOG_FILE}"; then
+      success "PostgreSQL is ready"
+      db_ready=true
+      break
+    fi
+
+    db_attempts=$((db_attempts + 1))
+    if [ $db_attempts -lt $db_max_attempts ]; then
+      warning "PostgreSQL not ready yet, waiting... (attempt ${db_attempts}/${db_max_attempts})"
+      sleep 2
+    fi
+  done
+
+  if [ "$db_ready" != "true" ]; then
+    fatal "PostgreSQL is not ready for connections. Cannot proceed with database setup."
+  fi
+
   # Create database first
   info "Creating database..."
   if ! sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:create" >> "${LOG_FILE}" 2>&1; then
-    fatal "Failed to create database. Check ${LOG_FILE} for details"
+    warning "Database creation failed (may already exist)"
+    # Don't fail here - database might already exist
+  else
+    success "Database created"
   fi
-  success "Database created"
 
-  # Run migrations (skip schema:load as schema.rb may be out of sync)
-  info "Running database migrations..."
-  if ! sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:migrate" >> "${LOG_FILE}" 2>&1; then
-    fatal "Failed to run database migrations. Check ${LOG_FILE} for details"
+  # Run migrations with retry logic (migrations can fail due to transient DB issues)
+  info "Running database migrations (with retry on failure)..."
+  if ! retry_command 3 2 sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:migrate"; then
+    error "Failed to run database migrations after multiple attempts"
+    error "This may be due to:"
+    error "  - Database connection issues"
+    error "  - Migration errors in the code"
+    error "  - Database permission issues"
+    error "Check ${LOG_FILE} for detailed error messages"
+    fatal "Failed to run database migrations"
   fi
   success "Database migrations completed"
 
@@ -274,16 +324,31 @@ setup_database() {
 # Precompile assets
 #######################################
 precompile_assets() {
-  step "Precompiling assets (this may take a few minutes)..."
+  step "Precompiling assets (this may take 5-10 minutes)..."
 
   cd "${APP_DIR}"
+
+  # Check available disk space before precompilation
+  local available_disk
+  available_disk=$(df "${APP_DIR}" | tail -1 | awk '{print $4}')
+  if [ "$available_disk" -lt 1048576 ]; then  # Less than 1GB in KB
+    warning "Low disk space ($(($available_disk / 1024))MB available). Asset precompilation may fail."
+  fi
 
   # Helper to run commands with rbenv loaded
   local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
 
-  # Precompile assets as deploy user
-  if ! sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails assets:precompile" >> "${LOG_FILE}" 2>&1; then
-    fatal "Failed to precompile assets. Check ${LOG_FILE} for details"
+  # Precompile assets as deploy user with timeout
+  info "Running asset precompilation (timeout: 15 minutes)..."
+  if ! run_with_timeout 900 sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails assets:precompile"; then
+    error "Failed to precompile assets"
+    error "This may be due to:"
+    error "  - Insufficient disk space"
+    error "  - JavaScript/CSS compilation errors"
+    error "  - Memory issues during compilation"
+    error "  - Timeout (precompilation took longer than 15 minutes)"
+    error "Check ${LOG_FILE} for detailed error messages"
+    fatal "Failed to precompile assets"
   fi
 
   success "Assets precompiled successfully"

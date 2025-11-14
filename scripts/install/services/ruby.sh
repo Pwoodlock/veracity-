@@ -142,7 +142,21 @@ EOF
 install_ruby() {
   step "Installing Ruby ${RUBY_VERSION}..."
 
-  info "This may take 10-15 minutes..."
+  info "This may take 10-20 minutes..."
+
+  # Check available memory and disk space before compilation
+  local available_mem
+  available_mem=$(free -m | awk '/^Mem:/{print $7}')
+  if [ "$available_mem" -lt 512 ]; then
+    warning "Low available memory (${available_mem}MB). Ruby compilation may be slow."
+    warning "Consider adding swap space if compilation fails."
+  fi
+
+  local available_disk
+  available_disk=$(df /tmp | tail -1 | awk '{print $4}')
+  if [ "$available_disk" -lt 1048576 ]; then  # Less than 1GB in KB
+    warning "Low disk space in /tmp. Ruby compilation may fail."
+  fi
 
   # Helper to run commands with rbenv loaded
   local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
@@ -152,9 +166,19 @@ install_ruby() {
     info "Ruby ${RUBY_VERSION} already installed"
   else
     # Install Ruby with jemalloc for better memory performance
-    if ! sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} RUBY_CONFIGURE_OPTS='--with-jemalloc' rbenv install ${RUBY_VERSION}" >> "${LOG_FILE}" 2>&1; then
-      warning "Failed to install with jemalloc, trying without..."
-      execute sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} rbenv install ${RUBY_VERSION}"
+    # Use timeout to prevent indefinite hangs (30 minutes max)
+    info "Compiling Ruby ${RUBY_VERSION} with jemalloc (timeout: 30 minutes)..."
+    if ! run_with_timeout 1800 sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} RUBY_CONFIGURE_OPTS='--with-jemalloc' rbenv install ${RUBY_VERSION}"; then
+      warning "Failed to install with jemalloc (timeout or error), trying without jemalloc..."
+      info "Compiling Ruby ${RUBY_VERSION} without jemalloc (timeout: 30 minutes)..."
+      if ! run_with_timeout 1800 sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} rbenv install ${RUBY_VERSION}"; then
+        error "Ruby compilation failed or timed out after 30 minutes"
+        error "This may be due to:"
+        error "  - Insufficient memory (need at least 1GB available)"
+        error "  - Insufficient disk space in /tmp"
+        error "  - Slow CPU"
+        fatal "Failed to compile Ruby ${RUBY_VERSION}. Check ${LOG_FILE} for details."
+      fi
     fi
     success "Ruby ${RUBY_VERSION} installed"
   fi
@@ -165,7 +189,12 @@ install_ruby() {
   # Rehash rbenv
   execute sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} rbenv rehash"
 
-  success "Ruby ${RUBY_VERSION} set as global version"
+  # Verify shims are accessible
+  if sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} which ruby" &>> "${LOG_FILE}"; then
+    success "Ruby ${RUBY_VERSION} set as global version and accessible"
+  else
+    warning "Ruby shims may not be immediately accessible, but should work after shell reload"
+  fi
 }
 
 #######################################

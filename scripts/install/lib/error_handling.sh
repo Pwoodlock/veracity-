@@ -128,8 +128,11 @@ handle_error() {
   # Mark checkpoint as failed
   mark_checkpoint_failed "${CURRENT_PHASE}"
 
-  # Don't exit immediately - let EXIT trap handle cleanup
-  return ${exit_code}
+  # Set flag to prevent duplicate error messages from EXIT trap
+  export ERROR_SHOWN=1
+
+  # Exit immediately with the error code
+  exit ${exit_code}
 }
 
 #######################################
