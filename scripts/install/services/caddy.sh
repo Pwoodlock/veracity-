@@ -376,8 +376,10 @@ setup_caddy() {
     fatal "ADMIN_EMAIL environment variable is required"
   fi
 
-  if [ -z "${GOTIFY_HOST:-}" ]; then
-    fatal "GOTIFY_HOST environment variable is required"
+  # Set default GOTIFY_PORT if not provided
+  if [ -z "${GOTIFY_PORT:-}" ]; then
+    warning "GOTIFY_PORT not set, using default: 8080"
+    GOTIFY_PORT="8080"
   fi
 
   install_caddy

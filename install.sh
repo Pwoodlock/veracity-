@@ -53,7 +53,7 @@ EOF
   echo "This installer will:"
   echo "  • Install all required dependencies"
   echo "  • Configure PostgreSQL, Redis, and SaltStack"
-  echo "  • Set up Ruby 3.4.7 and Node.js 24 LTS"
+  echo "  • Set up Ruby 3.3.6 and Node.js 24 LTS"
   echo "  • Install and configure Caddy with automatic HTTPS"
   echo "  • Deploy the Veracity application"
   echo "  • Create systemd services"
@@ -131,7 +131,7 @@ collect_configuration() {
   section "Feature Configuration"
 
   info "All features will be installed and enabled by default:"
-  echo "  • Gotify push notifications (Docker-based)"
+  echo "  • Gotify push notifications (binary-based)"
   echo "  • BorgBackup for server cloning/backups"
   echo "  • CVE vulnerability scanning (Python)"
   echo "  • Hetzner Cloud API integration (Python)"
@@ -175,7 +175,6 @@ confirm_installation() {
 
   cat << EOF
 Main Domain:     ${RAILS_HOST}
-Gotify Domain:   ${GOTIFY_HOST}
 Protocol:        ${RAILS_PROTOCOL}
 Admin Email:     ${ADMIN_EMAIL}
 Database:        ${DB_NAME}
@@ -190,7 +189,7 @@ Features (All Enabled):
 
 Installation Path: /opt/veracity/app
 Deploy User:      deploy
-Ruby Version:     3.4.7
+Ruby Version:     3.3.6
 Node.js Version:  24 LTS
 EOF
 
@@ -240,10 +239,10 @@ phase_salt() {
 # Install Ruby phase
 #######################################
 phase_ruby() {
-  progress_bar 4 12 "Installing Ruby 3.3.5..."
+  progress_bar 4 12 "Installing Ruby 3.3.6..."
   source "${SCRIPT_DIR}/scripts/install/services/ruby.sh"
   setup_ruby
-  add_rollback "Remove rbenv" "rm -rf /home/deploy/.rbenv 2>/dev/null"
+  add_rollback "Remove Mise Ruby" "rm -rf /home/deploy/.local/share/mise /home/deploy/.config/mise 2>/dev/null"
 }
 
 #######################################
@@ -275,14 +274,14 @@ phase_gotify() {
   progress_bar 7 12 "Installing Gotify..."
   source "${SCRIPT_DIR}/scripts/install/services/gotify.sh"
   setup_gotify
-  add_rollback "Stop Gotify" "docker stop gotify 2>/dev/null && docker rm gotify 2>/dev/null"
+  add_rollback "Stop Gotify" "systemctl stop gotify 2>/dev/null && systemctl disable gotify 2>/dev/null"
 }
 
 #######################################
 # Install BorgBackup phase
 #######################################
 phase_borgbackup() {
-  progress_bar 8 11 "Installing BorgBackup..."
+  progress_bar 8 12 "Installing BorgBackup..."
   source "${SCRIPT_DIR}/scripts/install/services/borgbackup.sh"
   setup_borgbackup
   add_rollback "Remove BorgBackup" "apt-get remove -y borgbackup 2>/dev/null || dnf remove -y borgbackup 2>/dev/null"
@@ -292,7 +291,7 @@ phase_borgbackup() {
 # Install Python integrations phase
 #######################################
 phase_python_integrations() {
-  progress_bar 9 11 "Installing Python integrations..."
+  progress_bar 9 12 "Installing Python integrations..."
   source "${SCRIPT_DIR}/scripts/install/services/python_integrations.sh"
   setup_python_integrations
   add_rollback "Remove integrations venv" "rm -rf /opt/veracity/app/integrations_venv 2>/dev/null"
@@ -358,7 +357,7 @@ run_installation() {
   export SECRET_KEY_BASE REDIS_URL
   export ADMIN_EMAIL ADMIN_PASSWORD
   export RAILS_HOST RAILS_PROTOCOL RAILS_FORCE_SSL RAILS_LOG_LEVEL="info" RAILS_MAX_THREADS="10"
-  export GOTIFY_ENABLED GOTIFY_PORT GOTIFY_ADMIN_USER GOTIFY_ADMIN_PASSWORD GOTIFY_URL GOTIFY_APP_TOKEN GOTIFY_HOST
+  export GOTIFY_ENABLED GOTIFY_PORT GOTIFY_ADMIN_USER GOTIFY_ADMIN_PASSWORD GOTIFY_URL GOTIFY_APP_TOKEN
   export OAUTH_ENABLED ZITADEL_ISSUER ZITADEL_CLIENT_ID
   export CVE_ENABLED CVE_URL CVE_SCHEDULE
   export TZ INSTALL_URL WEB_CONCURRENCY="2"
@@ -493,7 +492,6 @@ main() {
     echo "export GOTIFY_ADMIN_USER=\"${GOTIFY_ADMIN_USER:-}\""
     echo "export GOTIFY_ADMIN_PASSWORD=\"${GOTIFY_ADMIN_PASSWORD:-}\""
     echo "export GOTIFY_URL=\"${GOTIFY_URL:-}\""
-    echo "export GOTIFY_HOST=\"${GOTIFY_HOST:-}\""
     echo "export GOTIFY_APP_TOKEN=\"${GOTIFY_APP_TOKEN:-}\""
     echo "export OAUTH_ENABLED=\"${OAUTH_ENABLED:-}\""
     echo "export ZITADEL_ISSUER=\"${ZITADEL_ISSUER:-}\""
