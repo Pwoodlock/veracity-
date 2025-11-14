@@ -36,7 +36,14 @@ clone_repository() {
   if [ -d "${APP_DIR}" ]; then
     warning "Application directory already exists: ${APP_DIR}"
 
-    if confirm "Do you want to backup and re-clone?" "n"; then
+    # Check if directory contains a valid Rails application
+    if [ ! -f "${APP_DIR}/Gemfile" ]; then
+      warning "Directory exists but does not contain a Rails application (Gemfile missing)"
+      info "Will backup and re-clone automatically"
+      local backup_dir="${APP_DIR}.incomplete.$(date +%Y%m%d-%H%M%S)"
+      step "Backing up to: ${backup_dir}"
+      execute mv "${APP_DIR}" "${backup_dir}"
+    elif confirm "Do you want to backup and re-clone?" "n"; then
       local backup_dir="${APP_DIR}.backup.$(date +%Y%m%d-%H%M%S)"
       step "Backing up to: ${backup_dir}"
       execute mv "${APP_DIR}" "${backup_dir}"
