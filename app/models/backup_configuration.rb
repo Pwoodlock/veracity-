@@ -1,7 +1,10 @@
 class BackupConfiguration < ApplicationRecord
   # Encrypt sensitive fields
-  attr_encrypted :passphrase, key: Rails.application.credentials.secret_key_base[0..31]
-  attr_encrypted :ssh_key, key: Rails.application.credentials.secret_key_base[0..31]
+  # Use ENV-based secret key for encryption (fallback if credentials not available)
+  ENCRYPTION_KEY = (Rails.application.credentials.secret_key_base rescue nil) || ENV['SECRET_KEY_BASE']
+
+  attr_encrypted :passphrase, key: ENCRYPTION_KEY[0..31]
+  attr_encrypted :ssh_key, key: ENCRYPTION_KEY[0..31]
 
   # Validations
   validates :repository_url, presence: true, if: :enabled?
