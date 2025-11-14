@@ -132,8 +132,10 @@ collect_configuration() {
 
   info "All features will be installed and enabled by default:"
   echo "  • Gotify push notifications (Docker-based)"
-  echo "  • CVE vulnerability scanning (Python venv)"
-  echo "  • Proxmox API support (configure in UI)"
+  echo "  • BorgBackup for server cloning/backups"
+  echo "  • CVE vulnerability scanning (Python)"
+  echo "  • Hetzner Cloud API integration (Python)"
+  echo "  • Proxmox VE API integration (Python)"
   echo ""
   info "You can configure API keys and credentials via the web UI after installation"
   echo ""
@@ -190,8 +192,10 @@ Database User:   ${DB_USER}
 
 Features (All Enabled):
   ✓ Gotify push notifications (${GOTIFY_URL})
+  ✓ BorgBackup for server backups/cloning
   ✓ CVE vulnerability scanning (${CVE_URL})
-  ✓ Proxmox API support
+  ✓ Hetzner Cloud API integration
+  ✓ Proxmox VE API integration
 
 Installation Path: /opt/veracity/app
 Deploy User:      deploy
@@ -210,7 +214,7 @@ EOF
 #######################################
 phase_postgresql() {
   validate_phase_prerequisites "PostgreSQL" || return 1
-  progress_bar 1 11 "Installing PostgreSQL..."
+  progress_bar 1 12 "Installing PostgreSQL..."
   source "${SCRIPT_DIR}/scripts/install/services/postgresql.sh"
   setup_postgresql
   add_rollback "Stop PostgreSQL" "systemctl stop postgresql 2>/dev/null"
@@ -222,7 +226,7 @@ phase_postgresql() {
 #######################################
 phase_redis() {
   validate_phase_prerequisites "Redis" || return 1
-  progress_bar 2 11 "Installing Redis..."
+  progress_bar 2 12 "Installing Redis..."
   source "${SCRIPT_DIR}/scripts/install/services/redis.sh"
   setup_redis
   add_rollback "Stop Redis" "systemctl stop redis-server 2>/dev/null || systemctl stop redis 2>/dev/null"
@@ -234,7 +238,7 @@ phase_redis() {
 #######################################
 phase_salt() {
   validate_phase_prerequisites "SaltStack" || return 1
-  progress_bar 3 11 "Installing SaltStack..."
+  progress_bar 3 12 "Installing SaltStack..."
   source "${SCRIPT_DIR}/scripts/install/services/salt.sh"
   setup_salt
   add_rollback "Stop Salt services" "systemctl stop salt-master salt-api 2>/dev/null"
@@ -245,7 +249,7 @@ phase_salt() {
 # Install Ruby phase
 #######################################
 phase_ruby() {
-  progress_bar 4 11 "Installing Ruby 3.3.5..."
+  progress_bar 4 12 "Installing Ruby 3.3.5..."
   source "${SCRIPT_DIR}/scripts/install/services/ruby.sh"
   setup_ruby
   add_rollback "Remove rbenv" "rm -rf /home/deploy/.rbenv 2>/dev/null"
@@ -255,7 +259,7 @@ phase_ruby() {
 # Install Node.js phase
 #######################################
 phase_nodejs() {
-  progress_bar 5 11 "Installing Node.js..."
+  progress_bar 5 12 "Installing Node.js..."
   source "${SCRIPT_DIR}/scripts/install/services/nodejs.sh"
   setup_nodejs
   add_rollback "Remove Node.js" "apt-get remove -y nodejs 2>/dev/null || dnf remove -y nodejs 2>/dev/null"
@@ -266,7 +270,7 @@ phase_nodejs() {
 #######################################
 phase_caddy() {
   validate_phase_prerequisites "Caddy" || return 1
-  progress_bar 6 11 "Installing Caddy..."
+  progress_bar 6 12 "Installing Caddy..."
   source "${SCRIPT_DIR}/scripts/install/services/caddy.sh"
   setup_caddy
   add_rollback "Stop Caddy" "systemctl stop caddy 2>/dev/null"
@@ -277,20 +281,30 @@ phase_caddy() {
 # Install Gotify phase
 #######################################
 phase_gotify() {
-  progress_bar 7 11 "Installing Gotify..."
+  progress_bar 7 12 "Installing Gotify..."
   source "${SCRIPT_DIR}/scripts/install/services/gotify.sh"
   setup_gotify
   add_rollback "Stop Gotify" "docker stop gotify 2>/dev/null && docker rm gotify 2>/dev/null"
 }
 
 #######################################
-# Install CVE monitoring phase
+# Install BorgBackup phase
 #######################################
-phase_cve() {
-  progress_bar 8 11 "Installing CVE monitoring..."
-  source "${SCRIPT_DIR}/scripts/install/services/cve_monitoring.sh"
-  setup_cve_monitoring
-  add_rollback "Remove CVE venv" "rm -rf /opt/cve-monitor 2>/dev/null"
+phase_borgbackup() {
+  progress_bar 8 11 "Installing BorgBackup..."
+  source "${SCRIPT_DIR}/scripts/install/services/borgbackup.sh"
+  setup_borgbackup
+  add_rollback "Remove BorgBackup" "apt-get remove -y borgbackup 2>/dev/null || dnf remove -y borgbackup 2>/dev/null"
+}
+
+#######################################
+# Install Python integrations phase
+#######################################
+phase_python_integrations() {
+  progress_bar 9 11 "Installing Python integrations..."
+  source "${SCRIPT_DIR}/scripts/install/services/python_integrations.sh"
+  setup_python_integrations
+  add_rollback "Remove integrations venv" "rm -rf /opt/veracity/app/integrations_venv 2>/dev/null"
 }
 
 #######################################
@@ -298,7 +312,7 @@ phase_cve() {
 #######################################
 phase_application() {
   validate_phase_prerequisites "Application" || return 1
-  progress_bar 9 11 "Setting up application..."
+  progress_bar 10 12 "Setting up application..."
   source "${SCRIPT_DIR}/scripts/install/app-setup.sh"
   setup_application
   add_rollback "Remove application" "rm -rf /opt/veracity/app 2>/dev/null"
@@ -310,7 +324,7 @@ phase_application() {
 # Setup systemd services phase
 #######################################
 phase_systemd() {
-  progress_bar 10 11 "Configuring systemd services..."
+  progress_bar 11 12 "Configuring systemd services..."
   source "${SCRIPT_DIR}/scripts/install/systemd-setup.sh"
   setup_systemd
   add_rollback "Stop services" "systemctl stop server-manager server-manager-sidekiq 2>/dev/null"
@@ -322,7 +336,7 @@ phase_systemd() {
 # Setup firewall phase
 #######################################
 phase_firewall() {
-  progress_bar 11 11 "Configuring firewall..."
+  progress_bar 12 12 "Configuring firewall..."
   source "${SCRIPT_DIR}/scripts/install/firewall.sh"
   setup_firewall
 }
@@ -369,7 +383,8 @@ run_installation() {
   run_phase "Node.js" phase_nodejs "required" || return 1
   run_phase "Caddy" phase_caddy "required" || return 1
   run_phase "Gotify" phase_gotify "optional"
-  run_phase "CVEMonitoring" phase_cve "optional"
+  run_phase "BorgBackup" phase_borgbackup "optional"
+  run_phase "PythonIntegrations" phase_python_integrations "required" || return 1
   run_phase "Application" phase_application "required" || return 1
   run_phase "Systemd" phase_systemd "required" || return 1
   run_phase "Firewall" phase_firewall "required" || return 1

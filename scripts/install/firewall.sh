@@ -51,13 +51,9 @@ configure_firewall() {
   execute ufw allow 4506/tcp comment "Salt Request Server"
   success "Salt ports allowed (4505, 4506)"
 
-  # Optionally allow Gotify port
-  if [ "${GOTIFY_ENABLED:-false}" = "true" ] && [ -n "${GOTIFY_PORT:-}" ]; then
-    if confirm "Allow external access to Gotify port ${GOTIFY_PORT}?" "n"; then
-      execute ufw allow "${GOTIFY_PORT}/tcp" comment "Gotify"
-      success "Gotify port allowed (${GOTIFY_PORT})"
-    fi
-  fi
+  # Gotify port is NOT exposed - it's behind Caddy reverse proxy
+  # Only accessible via ${GOTIFY_URL} with HTTPS
+  info "Gotify running on localhost:${GOTIFY_PORT:-8080} (behind Caddy, not exposed)"
 
   # Enable UFW
   if ! is_firewall_active; then
