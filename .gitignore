@@ -4,6 +4,11 @@
 # See https://help.github.com/articles/ignoring-files for more about ignoring files.
 
 # =============================================================================
+# PRIVATE DOCUMENTATION (Never commit to GitHub)
+# =============================================================================
+/NoGiT4u/
+
+# =============================================================================
 # ENVIRONMENT AND SECRETS
 # =============================================================================
 # All environment files (development, production, test)
