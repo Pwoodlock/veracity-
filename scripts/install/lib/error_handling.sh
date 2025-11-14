@@ -62,8 +62,13 @@ log_message() {
   local timestamp
   timestamp=$(date '+%Y-%m-%d %H:%M:%S')
 
+  # Ensure state directory exists before logging
+  if [ ! -d "${STATE_DIR}" ]; then
+    mkdir -p "${STATE_DIR}" 2>/dev/null || true
+  fi
+
   # Log to file
-  echo "[${timestamp}] [${level}] ${message}" >> "${ERROR_LOG}"
+  echo "[${timestamp}] [${level}] ${message}" >> "${ERROR_LOG}" 2>/dev/null || true
 
   # Also log to main log if available
   if [[ -n "${LOG_FILE:-}" ]] && [[ -f "${LOG_FILE}" ]]; then
