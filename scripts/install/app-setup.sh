@@ -209,6 +209,13 @@ install_gems() {
   # Install gems as deploy user with timeout and retry
   # Bundle has built-in retry for gem downloads, but we add timeout protection
   info "Running bundle install (timeout: 20 minutes)..."
+  info "Installing ~50 gems with native extensions. Steps:"
+  info "  • Fetching gem metadata from rubygems.org"
+  info "  • Resolving dependencies"
+  info "  • Downloading gems (parallel with 4 jobs)"
+  info "  • Compiling native extensions (nokogiri, pg, puma, etc.)"
+  info "  • Installing to vendor/bundle"
+  echo ""
 
   # Use retry_command for network resilience
   if ! retry_command 3 5 run_with_timeout 1200 sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle install --jobs=4 --retry=3 --without development test"; then
@@ -238,6 +245,11 @@ install_node_packages() {
   # Install packages as deploy user with timeout and retry
   # COREPACK_ENABLE_DOWNLOAD_PROMPT=0 disables interactive Corepack prompts
   info "Running yarn install (timeout: 10 minutes)..."
+  info "Installing JavaScript dependencies from yarn.lock. Steps:"
+  info "  • Reading package.json and yarn.lock"
+  info "  • Fetching packages from npm registry"
+  info "  • Extracting and linking node_modules"
+  echo ""
 
   # Use retry_command for network resilience
   if ! retry_command 3 5 run_with_timeout 600 sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && COREPACK_ENABLE_DOWNLOAD_PROMPT=0 yarn install --frozen-lockfile"; then
@@ -299,6 +311,12 @@ setup_database() {
 
   # Run migrations with retry logic (migrations can fail due to transient DB issues)
   info "Running database migrations (with retry on failure)..."
+  info "Applying database schema changes. Steps:"
+  info "  • Connecting to PostgreSQL database"
+  info "  • Running pending migrations in timestamp order"
+  info "  • Creating/modifying tables and indexes"
+  info "  • Updating schema_migrations table"
+  echo ""
   if ! retry_command 3 2 sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:migrate"; then
     error "Failed to run database migrations after multiple attempts"
     error "This may be due to:"
@@ -339,6 +357,12 @@ precompile_assets() {
 
   # Precompile assets as deploy user with timeout
   info "Running asset precompilation (timeout: 15 minutes)..."
+  info "Compiling JavaScript and CSS for production. Steps:"
+  info "  • Processing app/assets/stylesheets → public/assets/*.css"
+  info "  • Processing app/assets/javascripts → public/assets/*.js"
+  info "  • Generating manifest files with fingerprints"
+  info "  • Compressing assets with gzip"
+  echo ""
   if ! run_with_timeout 900 sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails assets:precompile"; then
     error "Failed to precompile assets"
     error "This may be due to:"

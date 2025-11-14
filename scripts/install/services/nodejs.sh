@@ -101,6 +101,13 @@ install_yarn() {
   # Enable corepack (includes Yarn)
   if command_exists corepack; then
     execute corepack enable
+
+    # Pre-download yarn to avoid interactive prompts later
+    # Use COREPACK_ENABLE_DOWNLOAD_PROMPT=0 to disable prompts
+    info "Downloading Yarn package manager..."
+    export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
+    execute corepack prepare yarn@stable --activate
+
     success "Yarn enabled via corepack"
   else
     # Fallback: install via npm
@@ -123,6 +130,8 @@ verify_nodejs() {
   npm_version=$(npm --version)
   info "npm version: ${npm_version}"
 
+  # Ensure Corepack doesn't prompt during verification
+  export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
   local yarn_version
   yarn_version=$(yarn --version)
   info "Yarn version: ${yarn_version}"
@@ -167,6 +176,7 @@ setup_nodejs() {
   success "Node.js setup complete!"
   info "Node.js: $(node --version)"
   info "npm: $(npm --version)"
+  export COREPACK_ENABLE_DOWNLOAD_PROMPT=0
   info "Yarn: $(yarn --version)"
 }
 

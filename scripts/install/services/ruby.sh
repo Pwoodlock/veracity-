@@ -168,6 +168,14 @@ install_ruby() {
     # Install Ruby with jemalloc for better memory performance
     # Use timeout to prevent indefinite hangs (30 minutes max)
     info "Compiling Ruby ${RUBY_VERSION} with jemalloc (timeout: 30 minutes)..."
+    info "Steps: Download source → Configure → Compile C code → Build stdlib → Install"
+    info "This compiles ~200,000 lines of C code. Progress indicators:"
+    info "  • Downloading source code..."
+    info "  • Running ./configure (checks dependencies)"
+    info "  • Compiling interpreter (longest step, 5-15 min)"
+    info "  • Building standard library"
+    info "  • Installing to ~/.rbenv/versions/${RUBY_VERSION}"
+    echo ""
     if ! run_with_timeout 1800 sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} RUBY_CONFIGURE_OPTS='--with-jemalloc' rbenv install ${RUBY_VERSION}"; then
       warning "Failed to install with jemalloc (timeout or error), trying without jemalloc..."
       info "Compiling Ruby ${RUBY_VERSION} without jemalloc (timeout: 30 minutes)..."
