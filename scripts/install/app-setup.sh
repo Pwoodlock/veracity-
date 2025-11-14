@@ -397,27 +397,32 @@ create_admin_user() {
   # Helper to run commands with rbenv loaded
   local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
 
-  # Create admin user via Rails console
-  local create_admin_script="
-    user = User.find_or_initialize_by(email: '${ADMIN_EMAIL}')
-    user.password = '${ADMIN_PASSWORD}'
-    user.password_confirmation = '${ADMIN_PASSWORD}'
-    user.role = 'admin'
-    user.skip_confirmation! if user.respond_to?(:skip_confirmation!)
+  # Create temporary Ruby script to avoid quoting issues
+  local script_file="${APP_DIR}/tmp/create_admin_user.rb"
+  cat > "${script_file}" << EOF
+user = User.find_or_initialize_by(email: '${ADMIN_EMAIL}')
+user.password = '${ADMIN_PASSWORD}'
+user.password_confirmation = '${ADMIN_PASSWORD}'
+user.role = 'admin'
+user.skip_confirmation! if user.respond_to?(:skip_confirmation!)
 
-    if user.save
-      puts 'Admin user created successfully'
-    else
-      puts \"Failed to create admin user: #{user.errors.full_messages.join(', ')}\"
-      exit 1
-    end
-  "
+if user.save
+  puts 'Admin user created successfully'
+else
+  puts "Failed to create admin user: #{user.errors.full_messages.join(', ')}"
+  exit 1
+end
+EOF
 
-  if timeout 60 sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails runner \"${create_admin_script}\"" >> "${LOG_FILE}" 2>&1; then
+  execute chown "${DEPLOY_USER}:${DEPLOY_USER}" "${script_file}"
+
+  if timeout 60 sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails runner ${script_file}" >> "${LOG_FILE}" 2>&1; then
     success "Admin user created: ${ADMIN_EMAIL}"
+    execute rm -f "${script_file}"
   else
     warning "Failed to create admin user automatically (timed out or error occurred)"
     warning "You can create it manually after installation via Rails console"
+    execute rm -f "${script_file}"
   fi
 }
 
