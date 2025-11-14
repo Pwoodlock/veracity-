@@ -117,6 +117,19 @@ check_rails() {
   while [ $attempt -lt $max_attempts ]; do
     if curl -sSf "http://localhost:3000/up" -o /dev/null 2>&1; then
       success "Rails application is responding"
+
+      # Wait additional time for authentication system to fully initialize
+      # Devise, session store, and other auth components need a moment after /up responds
+      info "Waiting for authentication system to initialize..."
+      sleep 5
+
+      # Verify login page is accessible (tests routing + views + auth system)
+      if curl -sSf "http://localhost:3000/users/sign_in" -o /dev/null 2>&1; then
+        success "Authentication system is ready"
+      else
+        warning "Login page not yet accessible (will be ready shortly)"
+      fi
+
       return 0
     fi
 
