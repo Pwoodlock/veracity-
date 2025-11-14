@@ -1,6 +1,9 @@
 class ProxmoxApiKey < ApplicationRecord
   # Encrypt API token
-  attr_encrypted :api_token, key: Rails.application.credentials.secret_key_base[0..31]
+  # Use ENV-based secret key for encryption (fallback if credentials not available)
+  ENCRYPTION_KEY = (Rails.application.credentials.secret_key_base rescue nil) || ENV['SECRET_KEY_BASE']
+
+  attr_encrypted :api_token, key: ENCRYPTION_KEY[0..31]
 
   # Associations
   has_many :servers, foreign_key: 'proxmox_api_key_id', dependent: :nullify
