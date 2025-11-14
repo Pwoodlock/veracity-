@@ -4,42 +4,20 @@
 
 <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
     <div class="max-w-md w-full space-y-8">
-      <!-- Header with Veracity Logo -->
+      <!-- Header with Logo -->
       <div class="text-center">
-        <div class="flex justify-center mb-6">
-          <!-- SALT Crystal V Logo - Large -->
-          <div class="bg-base-200 rounded-2xl p-6 shadow-xl transform hover:scale-105 transition-transform">
-            <svg width="120" height="120" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <linearGradient id="saltGradLogin" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stop-color="#00C4CC" />
-                  <stop offset="100%" stop-color="#0099CC" />
-                </linearGradient>
-              </defs>
-              <!-- Outer hexagonal rings - crystal structure -->
-              <path d="M 100 20 L 150 50 L 150 110 L 100 140 L 50 110 L 50 50 Z" stroke="#00C4CC" stroke-width="3" fill="none" opacity="0.4"/>
-              <path d="M 100 30 L 140 55 L 140 105 L 100 130 L 60 105 L 60 55 Z" stroke="#00C4CC" stroke-width="3" fill="none" opacity="0.6"/>
-              <!-- Hexagonal facets creating depth -->
-              <path d="M 100 30 L 140 55 L 100 80 Z" fill="#00C4CC" opacity="0.15"/>
-              <path d="M 100 30 L 60 55 L 100 80 Z" fill="#00C4CC" opacity="0.2"/>
-              <!-- V shape integrated with crystal geometry -->
-              <path d="M 70 65 L 100 115 L 130 65" stroke="url(#saltGradLogin)" stroke-width="10" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-              <!-- Verification checkmark in crystalline style -->
-              <path d="M 88 105 L 100 115 L 122 88" stroke="#57D9A3" stroke-width="7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-              <!-- Inner hexagon - core -->
-              <path d="M 100 85 L 115 95 L 115 110 L 100 120 L 85 110 L 85 95 Z" stroke="#57D9A3" stroke-width="2" fill="#57D9A3" opacity="0.25"/>
-              <!-- Crystalline corner details -->
-              <path d="M 50 50 L 45 53 L 48 58" stroke="#0099CC" stroke-width="2" opacity="0.5"/>
-              <path d="M 150 50 L 155 53 L 152 58" stroke="#0099CC" stroke-width="2" opacity="0.5"/>
-              <path d="M 100 140 L 95 143 L 100 148" stroke="#0099CC" stroke-width="2" opacity="0.5"/>
-            </svg>
+        <% if SystemSetting.logo_url.present? %>
+          <div class="flex justify-center mb-6">
+            <div class="bg-base-200 rounded-2xl p-6 shadow-xl transform hover:scale-105 transition-transform">
+              <img src="<%= SystemSetting.logo_url %>" alt="<%= SystemSetting.company_name %>" class="h-24 w-auto">
+            </div>
           </div>
-        </div>
+        <% end %>
         <h2 class="text-4xl font-extrabold text-white" style="font-family: 'Inter', sans-serif;">
-          VERACITY
+          <%= SystemSetting.company_name %>
         </h2>
         <p class="mt-3 text-base text-base-content/80">
-          Server Infrastructure Management
+          <%= SystemSetting.tagline %>
         </p>
       </div>
 

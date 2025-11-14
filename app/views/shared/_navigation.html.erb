@@ -43,22 +43,10 @@
 
     <!-- Logo -->
     <%= link_to root_path, class: "btn btn-ghost normal-case text-xl hover:bg-base-content/5" do %>
-      <svg width="48" height="48" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg" class="inline-block">
-        <defs>
-          <linearGradient id="saltGradNav" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#00C4CC" />
-            <stop offset="100%" stop-color="#0099CC" />
-          </linearGradient>
-        </defs>
-        <path d="M 100 20 L 150 50 L 150 110 L 100 140 L 50 110 L 50 50 Z" stroke="#00C4CC" stroke-width="2" fill="none" opacity="0.3"/>
-        <path d="M 100 30 L 140 55 L 140 105 L 100 130 L 60 105 L 60 55 Z" stroke="#00C4CC" stroke-width="2" fill="none" opacity="0.5"/>
-        <path d="M 100 30 L 140 55 L 100 80 Z" fill="#00C4CC" opacity="0.1"/>
-        <path d="M 100 30 L 60 55 L 100 80 Z" fill="#00C4CC" opacity="0.15"/>
-        <path d="M 70 65 L 100 115 L 130 65" stroke="url(#saltGradNav)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <path d="M 88 105 L 100 115 L 122 88" stroke="#57D9A3" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-        <path d="M 100 85 L 115 95 L 115 110 L 100 120 L 85 110 L 85 95 Z" stroke="#57D9A3" stroke-width="1.5" fill="#57D9A3" opacity="0.2"/>
-      </svg>
-      <span class="text-primary font-bold tracking-wide ml-2">VERACITY</span>
+      <% if SystemSetting.logo_url.present? %>
+        <img src="<%= SystemSetting.logo_url %>" alt="<%= SystemSetting.company_name %>" class="h-8 w-auto">
+      <% end %>
+      <span class="text-primary font-bold tracking-wide <%= 'ml-2' if SystemSetting.logo_url.present? %>"><%= SystemSetting.company_name %></span>
     <% end %>
   </div>
 
@@ -165,7 +153,7 @@
   <!-- Right Side - User Menu -->
   <div class="navbar-end gap-2">
     <!-- Docs Link -->
-    <a href="/docs" class="btn btn-ghost btn-circle btn-sm" title="Documentation">
+    <a href="https://pwoodlock.github.io/veracity-/" target="_blank" rel="noopener noreferrer" class="btn btn-ghost btn-circle btn-sm" title="Documentation" aria-label="Open documentation in new tab">
       <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
       </svg>
@@ -187,67 +175,6 @@
         <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
       </svg>
     </a>
-
-    <!-- Theme Selector -->
-    <div class="dropdown dropdown-end">
-      <label tabindex="0" class="btn btn-ghost btn-circle btn-sm" title="Change Theme">
-        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
-        </svg>
-      </label>
-      <div tabindex="0" class="dropdown-content z-50 mt-3 shadow-2xl bg-base-200 rounded-box border border-base-content/10 p-4 w-[500px]">
-        <div class="flex items-center gap-2 mb-3 pb-3 border-b border-base-content/10">
-          <svg class="h-4 w-4 text-base-content" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
-          </svg>
-          <span class="text-sm font-semibold text-base-content">Select Theme</span>
-        </div>
-
-        <!-- Dark Themes -->
-        <div class="mb-4">
-          <h4 class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">Dark Themes</h4>
-          <div class="grid grid-cols-4 gap-2">
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="night">Night</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="dark">Dark</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="dracula">Dracula</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="business">Business</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="coffee">Coffee</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="dim">Dim</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="sunset">Sunset</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="synthwave">Synthwave</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="halloween">Halloween</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="forest">Forest</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="black">Black</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="luxury">Luxury</button>
-          </div>
-        </div>
-
-        <!-- Light Themes -->
-        <div>
-          <h4 class="text-xs font-semibold text-base-content/60 uppercase tracking-wide mb-2">Light Themes</h4>
-          <div class="grid grid-cols-4 gap-2">
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="light">Light</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="cupcake">Cupcake</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="emerald">Emerald</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="corporate">Corporate</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="retro">Retro</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="cyberpunk">Cyberpunk</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="valentine">Valentine</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="garden">Garden</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="lofi">Lo-Fi</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="pastel">Pastel</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="fantasy">Fantasy</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="wireframe">Wireframe</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="cmyk">CMYK</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="autumn">Autumn</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="acid">Acid</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="lemonade">Lemonade</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="winter">Winter</button>
-            <button class="theme-option btn btn-sm btn-ghost justify-start normal-case" data-theme="nord">Nord</button>
-          </div>
-        </div>
-      </div>
-    </div>
 
 
     <!-- User Dropdown -->

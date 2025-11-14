@@ -14,10 +14,11 @@
     <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
     <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
 
-    <!-- Veracity Branding -->
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-    <link rel="icon" href="/icon.png" type="image/png">
-    <link rel="apple-touch-icon" href="/icon.png">
+    <!-- Favicon - Only show if custom logo is uploaded -->
+    <% if SystemSetting.logo_url.present? %>
+      <link rel="icon" href="<%= SystemSetting.logo_url %>" type="image/png">
+      <link rel="apple-touch-icon" href="<%= SystemSetting.logo_url %>">
+    <% end %>
 
     <!-- Inter Font (Modern Professional Typography) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
