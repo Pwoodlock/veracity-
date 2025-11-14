@@ -14,7 +14,7 @@ source "${SERVICE_SCRIPT_DIR}/../lib/common.sh"
 source "${SERVICE_SCRIPT_DIR}/../lib/validators.sh"
 
 # Ruby version to install
-readonly RUBY_VERSION="3.4.7"
+readonly RUBY_VERSION="3.3.5"
 readonly RUBY_VARIANT="jemalloc"  # Use jemalloc variant for better memory performance
 readonly DEPLOY_USER="deploy"
 readonly DEPLOY_HOME="/home/${DEPLOY_USER}"
@@ -61,7 +61,15 @@ add_fullstaq_repo_debian() {
   done
 
   # Add repository
-  echo "deb [signed-by=/usr/share/keyrings/fullstaq-ruby.gpg] https://apt.fullstaqruby.org $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/fullstaq-ruby.list > /dev/null
+  # Fullstaq Ruby uses "ubuntu-VERSION" format instead of codenames
+  local ubuntu_version
+  if [ -f /etc/os-release ]; then
+    ubuntu_version=$(grep VERSION_ID /etc/os-release | cut -d'=' -f2 | tr -d '"')
+    echo "deb [signed-by=/usr/share/keyrings/fullstaq-ruby.gpg] https://apt.fullstaqruby.org ubuntu-${ubuntu_version} main" | tee /etc/apt/sources.list.d/fullstaq-ruby.list > /dev/null
+  else
+    # Fallback to codename if VERSION_ID not found
+    echo "deb [signed-by=/usr/share/keyrings/fullstaq-ruby.gpg] https://apt.fullstaqruby.org $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/fullstaq-ruby.list > /dev/null
+  fi
 
   # Update package lists
   execute apt-get update

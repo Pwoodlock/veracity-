@@ -29,7 +29,7 @@ readonly REPO_URL="${REPO_URL:-https://github.com/Pwoodlock/veracity-.git}"
 readonly REPO_BRANCH="${REPO_BRANCH:-main}"
 
 # Ruby configuration (must match ruby.sh)
-readonly RUBY_VERSION="3.4.7"
+readonly RUBY_VERSION="3.3.5"
 readonly RUBY_VARIANT="jemalloc"
 readonly RUBY_DIR="/usr/local/fullstaq-ruby/versions/ruby-${RUBY_VERSION}-${RUBY_VARIANT}"
 
