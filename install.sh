@@ -53,7 +53,7 @@ EOF
   echo "This installer will:"
   echo "  • Install all required dependencies"
   echo "  • Configure PostgreSQL, Redis, and SaltStack"
-  echo "  • Set up Ruby 3.3.5 and Node.js 18"
+  echo "  • Set up Ruby 3.4.7 and Node.js 24 LTS"
   echo "  • Install and configure Caddy with automatic HTTPS"
   echo "  • Deploy the Veracity application"
   echo "  • Create systemd services"
@@ -199,8 +199,8 @@ Features (All Enabled):
 
 Installation Path: /opt/veracity/app
 Deploy User:      deploy
-Ruby Version:     3.3.5
-Node.js Version:  18 LTS
+Ruby Version:     3.4.7
+Node.js Version:  24 LTS
 EOF
 
   echo ""

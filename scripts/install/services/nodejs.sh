@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # nodejs.sh - Node.js and Yarn installation
-# Installs Node.js 18 LTS and Yarn package manager
+# Installs Node.js 24 LTS and Yarn package manager
 #
 
 set -euo pipefail
@@ -14,7 +14,7 @@ source "${SERVICE_SCRIPT_DIR}/../lib/common.sh"
 source "${SERVICE_SCRIPT_DIR}/../lib/validators.sh"
 
 # Node.js version
-readonly NODE_MAJOR="18"
+readonly NODE_MAJOR="24"
 
 #######################################
 # Install Node.js

@@ -1,7 +1,7 @@
 #!/bin/bash
 #
-# ruby.sh - Ruby installation via rbenv
-# Installs rbenv, ruby-build, and Ruby 3.3.5 for deploy user
+# ruby.sh - Ruby installation via Fullstaq Ruby (precompiled binaries)
+# Installs Fullstaq Ruby 3.3.5 with jemalloc for production performance
 #
 
 set -euo pipefail
@@ -14,51 +14,52 @@ source "${SERVICE_SCRIPT_DIR}/../lib/common.sh"
 source "${SERVICE_SCRIPT_DIR}/../lib/validators.sh"
 
 # Ruby version to install
-readonly RUBY_VERSION="3.3.5"
+readonly RUBY_VERSION="3.4.7"
+readonly RUBY_VARIANT="jemalloc"  # Use jemalloc variant for better memory performance
 readonly DEPLOY_USER="deploy"
 readonly DEPLOY_HOME="/home/${DEPLOY_USER}"
 
 #######################################
-# Install Ruby dependencies
-# Globals:
-#   OS_ID
+# Add Fullstaq Ruby APT repository (Debian/Ubuntu)
 #######################################
-install_ruby_dependencies() {
-  step "Installing Ruby build dependencies..."
+add_fullstaq_repo_debian() {
+  step "Adding Fullstaq Ruby repository..."
 
-  # Detect OS if not already set (handles resume scenario)
-  if [ -z "${OS_ID:-}" ]; then
-    info "OS not detected, detecting now..."
-    if [ -f /etc/os-release ]; then
-      # shellcheck source=/dev/null
-      . /etc/os-release
-      export OS_ID="$ID"
-      export OS_NAME="$NAME"
-      export OS_VERSION="${VERSION_ID:-unknown}"
-    else
-      fatal "Cannot detect operating system. /etc/os-release not found."
-    fi
-  fi
+  # Install dependencies
+  install_packages ca-certificates curl gnupg apt-transport-https
 
-  case "${OS_ID}" in
-    ubuntu|debian)
-      spinner "Installing dependencies" install_packages \
-        build-essential libssl-dev libreadline-dev zlib1g-dev \
-        libyaml-dev libxml2-dev libxslt1-dev libcurl4-openssl-dev \
-        libffi-dev autoconf bison patch rustc libjemalloc-dev
-      ;;
-    rocky|almalinux|rhel)
-      spinner "Installing dependencies" install_packages \
-        gcc gcc-c++ make openssl-devel readline-devel zlib-devel \
-        libyaml-devel libxml2-devel libxslt-devel libcurl-devel \
-        libffi-devel autoconf bison patch rust cargo jemalloc-devel
-      ;;
-    *)
-      fatal "Unsupported OS for Ruby dependencies: ${OS_ID}"
-      ;;
-  esac
+  # Add Fullstaq Ruby GPG key
+  execute curl -fsSL https://raw.githubusercontent.com/fullstaq-labs/fullstaq-ruby-server-edition/main/fullstaq-ruby.asc | gpg --dearmor -o /usr/share/keyrings/fullstaq-ruby.gpg
 
-  success "Ruby dependencies installed"
+  # Add repository
+  echo "deb [signed-by=/usr/share/keyrings/fullstaq-ruby.gpg] https://apt.fullstaqruby.org $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/fullstaq-ruby.list > /dev/null
+
+  # Update package lists
+  execute apt-get update
+
+  success "Fullstaq Ruby repository added"
+}
+
+#######################################
+# Add Fullstaq Ruby YUM repository (RHEL/Rocky/Alma)
+#######################################
+add_fullstaq_repo_rhel() {
+  step "Adding Fullstaq Ruby repository..."
+
+  # Add Fullstaq Ruby repository
+  cat > /etc/yum.repos.d/fullstaq-ruby.repo << 'EOF'
+[fullstaq-ruby]
+name=Fullstaq Ruby
+baseurl=https://yum.fullstaqruby.org/centos-$releasever/$basearch
+gpgcheck=1
+gpgkey=https://raw.githubusercontent.com/fullstaq-labs/fullstaq-ruby-server-edition/main/fullstaq-ruby.asc
+enabled=1
+EOF
+
+  # Update package lists
+  execute dnf makecache
+
+  success "Fullstaq Ruby repository added"
 }
 
 #######################################
@@ -84,44 +85,62 @@ create_deploy_user() {
 }
 
 #######################################
-# Install rbenv for deploy user
+# Install Fullstaq Ruby (Debian/Ubuntu)
 #######################################
-install_rbenv() {
-  step "Installing rbenv for ${DEPLOY_USER}..."
+install_fullstaq_ruby_debian() {
+  step "Installing Fullstaq Ruby ${RUBY_VERSION}-${RUBY_VARIANT}..."
 
-  # Clone rbenv
-  if [ ! -d "${DEPLOY_HOME}/.rbenv" ]; then
-    execute sudo -u "${DEPLOY_USER}" git clone https://github.com/rbenv/rbenv.git "${DEPLOY_HOME}/.rbenv"
-    success "rbenv cloned"
-  else
-    info "rbenv already installed"
-  fi
+  # Install Fullstaq Ruby package (takes seconds, not minutes!)
+  local package_name="fullstaq-ruby-${RUBY_VERSION}-${RUBY_VARIANT}"
 
-  # Compile bash extension for speed
-  execute sudo -u "${DEPLOY_USER}" bash -c "cd ${DEPLOY_HOME}/.rbenv && src/configure && make -C src" || true
+  spinner "Installing ${package_name}" install_packages "${package_name}"
 
-  # Clone ruby-build plugin
-  if [ ! -d "${DEPLOY_HOME}/.rbenv/plugins/ruby-build" ]; then
-    execute sudo -u "${DEPLOY_USER}" git clone https://github.com/rbenv/ruby-build.git \
-      "${DEPLOY_HOME}/.rbenv/plugins/ruby-build"
-    success "ruby-build plugin installed"
-  else
-    info "ruby-build already installed"
-  fi
+  # Install bundler and common-${RUBY_VARIANT} for shared libraries
+  install_packages "fullstaq-ruby-common-${RUBY_VARIANT}"
 
-  # Add rbenv to PATH in .bashrc
-  if ! grep -q 'rbenv init' "${DEPLOY_HOME}/.bashrc"; then
-    cat >> "${DEPLOY_HOME}/.bashrc" << 'EOF'
+  success "Fullstaq Ruby ${RUBY_VERSION} installed in seconds!"
+}
 
-# rbenv initialization
-export PATH="$HOME/.rbenv/bin:$PATH"
-eval "$(rbenv init -)"
+#######################################
+# Install Fullstaq Ruby (RHEL/Rocky/Alma)
+#######################################
+install_fullstaq_ruby_rhel() {
+  step "Installing Fullstaq Ruby ${RUBY_VERSION}-${RUBY_VARIANT}..."
+
+  # Install Fullstaq Ruby package
+  local package_name="fullstaq-ruby-${RUBY_VERSION}-${RUBY_VARIANT}"
+
+  spinner "Installing ${package_name}" install_packages "${package_name}"
+
+  # Install common package
+  install_packages "fullstaq-ruby-common-${RUBY_VARIANT}"
+
+  success "Fullstaq Ruby ${RUBY_VERSION} installed in seconds!"
+}
+
+#######################################
+# Configure Fullstaq Ruby for deploy user
+#######################################
+configure_fullstaq_ruby() {
+  step "Configuring Fullstaq Ruby for ${DEPLOY_USER}..."
+
+  # Fullstaq Ruby installs to /usr/local/fullstaq-ruby/versions/ruby-X.X.X-VARIANT
+  local ruby_dir="/usr/local/fullstaq-ruby/versions/ruby-${RUBY_VERSION}-${RUBY_VARIANT}"
+
+  # Add to deploy user's PATH
+  if ! grep -q 'fullstaq-ruby' "${DEPLOY_HOME}/.bashrc" 2>/dev/null; then
+    cat >> "${DEPLOY_HOME}/.bashrc" << EOF
+
+# Fullstaq Ruby
+export PATH="${ruby_dir}/bin:\$PATH"
+export GEM_HOME="${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}"
+export GEM_PATH="${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}:${ruby_dir}/lib/ruby/gems/${RUBY_VERSION%.*}.0"
 EOF
     execute chown "${DEPLOY_USER}:${DEPLOY_USER}" "${DEPLOY_HOME}/.bashrc"
-    success "rbenv added to .bashrc"
+    success "Fullstaq Ruby added to PATH"
   fi
 
-  # Ensure .bash_profile sources .bashrc (for login shells)
+  # Ensure .bash_profile sources .bashrc
   if [ ! -f "${DEPLOY_HOME}/.bash_profile" ]; then
     cat > "${DEPLOY_HOME}/.bash_profile" << 'EOF'
 # Source .bashrc if it exists
@@ -130,79 +149,21 @@ if [ -f "$HOME/.bashrc" ]; then
 fi
 EOF
     execute chown "${DEPLOY_USER}:${DEPLOY_USER}" "${DEPLOY_HOME}/.bash_profile"
-    info "Created .bash_profile to source .bashrc"
   fi
 
-  success "rbenv installed successfully"
-}
+  # Create gem directory
+  execute mkdir -p "${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}"
+  execute chown -R "${DEPLOY_USER}:${DEPLOY_USER}" "${DEPLOY_HOME}/.gem"
 
-#######################################
-# Install Ruby via rbenv
-#######################################
-install_ruby() {
-  step "Installing Ruby ${RUBY_VERSION}..."
-
-  info "This may take 10-20 minutes..."
-
-  # Check available memory and disk space before compilation
-  local available_mem
-  available_mem=$(free -m | awk '/^Mem:/{print $7}')
-  if [ "$available_mem" -lt 512 ]; then
-    warning "Low available memory (${available_mem}MB). Ruby compilation may be slow."
-    warning "Consider adding swap space if compilation fails."
+  # Create symlinks for system-wide access
+  if [ ! -L /usr/local/bin/ruby ]; then
+    execute ln -sf "${ruby_dir}/bin/ruby" /usr/local/bin/ruby
+  fi
+  if [ ! -L /usr/local/bin/gem ]; then
+    execute ln -sf "${ruby_dir}/bin/gem" /usr/local/bin/gem
   fi
 
-  local available_disk
-  available_disk=$(df /tmp | tail -1 | awk '{print $4}')
-  if [ "$available_disk" -lt 1048576 ]; then  # Less than 1GB in KB
-    warning "Low disk space in /tmp. Ruby compilation may fail."
-  fi
-
-  # Helper to run commands with rbenv loaded
-  local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
-
-  # Check if Ruby version is already installed
-  if sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} rbenv versions | grep -q ${RUBY_VERSION}" 2>/dev/null; then
-    info "Ruby ${RUBY_VERSION} already installed"
-  else
-    # Install Ruby with jemalloc for better memory performance
-    # Use timeout to prevent indefinite hangs (30 minutes max)
-    info "Compiling Ruby ${RUBY_VERSION} with jemalloc (timeout: 30 minutes)..."
-    info "Steps: Download source → Configure → Compile C code → Build stdlib → Install"
-    info "This compiles ~200,000 lines of C code. Progress indicators:"
-    info "  • Downloading source code..."
-    info "  • Running ./configure (checks dependencies)"
-    info "  • Compiling interpreter (longest step, 5-15 min)"
-    info "  • Building standard library"
-    info "  • Installing to ~/.rbenv/versions/${RUBY_VERSION}"
-    echo ""
-    if ! run_with_timeout 1800 sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} RUBY_CONFIGURE_OPTS='--with-jemalloc' rbenv install ${RUBY_VERSION}"; then
-      warning "Failed to install with jemalloc (timeout or error), trying without jemalloc..."
-      info "Compiling Ruby ${RUBY_VERSION} without jemalloc (timeout: 30 minutes)..."
-      if ! run_with_timeout 1800 sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} rbenv install ${RUBY_VERSION}"; then
-        error "Ruby compilation failed or timed out after 30 minutes"
-        error "This may be due to:"
-        error "  - Insufficient memory (need at least 1GB available)"
-        error "  - Insufficient disk space in /tmp"
-        error "  - Slow CPU"
-        fatal "Failed to compile Ruby ${RUBY_VERSION}. Check ${LOG_FILE} for details."
-      fi
-    fi
-    success "Ruby ${RUBY_VERSION} installed"
-  fi
-
-  # Set global Ruby version
-  execute sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} rbenv global ${RUBY_VERSION}"
-
-  # Rehash rbenv
-  execute sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} rbenv rehash"
-
-  # Verify shims are accessible
-  if sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} which ruby" &>> "${LOG_FILE}"; then
-    success "Ruby ${RUBY_VERSION} set as global version and accessible"
-  else
-    warning "Ruby shims may not be immediately accessible, but should work after shell reload"
-  fi
+  success "Fullstaq Ruby configured"
 }
 
 #######################################
@@ -211,10 +172,16 @@ install_ruby() {
 install_bundler() {
   step "Installing bundler..."
 
-  local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
+  local ruby_dir="/usr/local/fullstaq-ruby/versions/ruby-${RUBY_VERSION}-${RUBY_VARIANT}"
+  local ruby_cmd="export PATH=\"${ruby_dir}/bin:\$PATH\" && export GEM_HOME=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}\" && "
 
-  execute sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} gem install bundler --no-document"
-  execute sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} rbenv rehash"
+  execute sudo -u "${DEPLOY_USER}" bash -c "${ruby_cmd} gem install bundler --no-document"
+
+  # Create symlink for bundle
+  if [ ! -L /usr/local/bin/bundle ]; then
+    execute ln -sf "${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}/bin/bundle" /usr/local/bin/bundle || \
+    execute ln -sf "${ruby_dir}/bin/bundle" /usr/local/bin/bundle
+  fi
 
   success "Bundler installed"
 }
@@ -223,27 +190,35 @@ install_bundler() {
 # Verify Ruby installation
 #######################################
 verify_ruby() {
-  step "Verifying Ruby installation..."
+  step "Verifying Fullstaq Ruby installation..."
 
-  local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
+  local ruby_dir="/usr/local/fullstaq-ruby/versions/ruby-${RUBY_VERSION}-${RUBY_VARIANT}"
+  local ruby_cmd="export PATH=\"${ruby_dir}/bin:\$PATH\" && export GEM_HOME=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}\" && "
 
   local ruby_version
-  ruby_version=$(sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} ruby -v")
+  ruby_version=$(sudo -u "${DEPLOY_USER}" bash -c "${ruby_cmd} ruby -v")
   info "Ruby version: ${ruby_version}"
 
   local gem_version
-  gem_version=$(sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} gem -v")
+  gem_version=$(sudo -u "${DEPLOY_USER}" bash -c "${ruby_cmd} gem -v")
   info "RubyGems version: ${gem_version}"
 
   local bundler_version
-  bundler_version=$(sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} bundler -v")
+  bundler_version=$(sudo -u "${DEPLOY_USER}" bash -c "${ruby_cmd} bundler -v")
   info "Bundler version: ${bundler_version}"
 
   # Verify correct Ruby version
-  if sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} ruby -v" | grep -q "${RUBY_VERSION}"; then
-    success "Ruby ${RUBY_VERSION} verified successfully"
+  if sudo -u "${DEPLOY_USER}" bash -c "${ruby_cmd} ruby -v" | grep -q "${RUBY_VERSION}"; then
+    success "Fullstaq Ruby ${RUBY_VERSION}-${RUBY_VARIANT} verified successfully"
   else
     fatal "Ruby version mismatch"
+  fi
+
+  # Verify jemalloc is enabled
+  if ldd "${ruby_dir}/bin/ruby" | grep -q jemalloc; then
+    success "jemalloc memory allocator enabled"
+  else
+    warning "jemalloc not detected (expected for ${RUBY_VARIANT} variant)"
   fi
 }
 
@@ -271,28 +246,51 @@ EOF
 # Main function that orchestrates Ruby setup
 #######################################
 setup_ruby() {
-  section "Installing Ruby ${RUBY_VERSION}"
+  section "Installing Fullstaq Ruby ${RUBY_VERSION}-${RUBY_VARIANT}"
 
-  install_ruby_dependencies
+  # Detect OS if not already set
+  if [ -z "${OS_ID:-}" ]; then
+    info "OS not detected, detecting now..."
+    if [ -f /etc/os-release ]; then
+      # shellcheck source=/dev/null
+      . /etc/os-release
+      export OS_ID="$ID"
+      export OS_NAME="$NAME"
+      export OS_VERSION="${VERSION_ID:-unknown}"
+    else
+      fatal "Cannot detect operating system. /etc/os-release not found."
+    fi
+  fi
+
+  # Create deploy user
   create_deploy_user
-  install_rbenv
-  install_ruby
+
+  # Add Fullstaq repository and install Ruby (OS-specific)
+  case "${OS_ID}" in
+    ubuntu|debian)
+      add_fullstaq_repo_debian
+      install_fullstaq_ruby_debian
+      ;;
+    rocky|almalinux|rhel)
+      add_fullstaq_repo_rhel
+      install_fullstaq_ruby_rhel
+      ;;
+    *)
+      fatal "Unsupported OS for Fullstaq Ruby: ${OS_ID}"
+      ;;
+  esac
+
+  # Configure Ruby for deploy user
+  configure_fullstaq_ruby
   configure_gem_settings
   install_bundler
   verify_ruby
 
-  # Create symbolic links for easier access
-  if [ ! -L /usr/local/bin/bundle ]; then
-    execute ln -sf "${DEPLOY_HOME}/.rbenv/shims/bundle" /usr/local/bin/bundle || true
-  fi
-  if [ ! -L /usr/local/bin/ruby ]; then
-    execute ln -sf "${DEPLOY_HOME}/.rbenv/shims/ruby" /usr/local/bin/ruby || true
-  fi
-
-  success "Ruby setup complete!"
+  success "Fullstaq Ruby setup complete!"
   info "Deploy user: ${DEPLOY_USER}"
-  info "Ruby version: ${RUBY_VERSION}"
-  info "rbenv location: ${DEPLOY_HOME}/.rbenv"
+  info "Ruby version: ${RUBY_VERSION}-${RUBY_VARIANT}"
+  info "Ruby location: /usr/local/fullstaq-ruby/versions/ruby-${RUBY_VERSION}-${RUBY_VARIANT}"
+  info "Installation time: ~30 seconds (vs 10-20 minutes with source compilation)"
 }
 
 # If script is executed directly, run setup
