@@ -140,21 +140,12 @@ collect_configuration() {
   info "You can configure API keys and credentials via the web UI after installation"
   echo ""
 
-  # Gotify domain configuration
-  echo ""
-  while true; do
-    GOTIFY_HOST=$(prompt "Gotify domain or subdomain (e.g., gotify.example.ie)")
-    if validate_domain "${GOTIFY_HOST}"; then
-      break
-    fi
-  done
-
-  # Gotify - always install
+  # Gotify - always install (accessible at /gotify path)
   GOTIFY_ENABLED="true"
   GOTIFY_PORT="8080"
   GOTIFY_ADMIN_USER="admin"
   GOTIFY_ADMIN_PASSWORD=$(generate_password 20)
-  GOTIFY_URL="${RAILS_PROTOCOL}://${GOTIFY_HOST}"
+  GOTIFY_URL="${RAILS_PROTOCOL}://${RAILS_HOST}/gotify"
   GOTIFY_APP_TOKEN=""  # Will be generated after installation
 
   # OAuth/Zitadel - prepare for configuration

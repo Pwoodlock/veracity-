@@ -316,8 +316,8 @@ display_gotify_info() {
 
   echo ""
   info "Gotify is configured to run on 127.0.0.1:${GOTIFY_PORT}"
-  info "Access via Caddy reverse proxy at: https://${RAILS_HOST}/gotify"
-  info "Or configure a subdomain in Caddy (e.g., gotify.${RAILS_HOST})"
+  info "Access via Caddy reverse proxy at: ${RAILS_PROTOCOL}://${RAILS_HOST}/gotify"
+  info "Web UI available at: ${RAILS_PROTOCOL}://${RAILS_HOST}/gotify/"
 
   echo ""
   info "Service status: systemctl status gotify"

@@ -138,24 +138,41 @@ ${RAILS_HOST} {
         format json
     }
 
-    # Reverse proxy to Rails application
-    reverse_proxy localhost:${port} {
-        # Health check
-        health_uri /up
-        health_interval 10s
-        health_timeout 5s
+    # Gotify push notification server (path-based)
+    handle /gotify* {
+        reverse_proxy localhost:${GOTIFY_PORT} {
+            # Headers
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Host {host}
 
-        # Headers
-        header_up X-Real-IP {remote_host}
-        header_up X-Forwarded-For {remote_host}
-        header_up X-Forwarded-Proto {scheme}
-        header_up X-Forwarded-Host {host}
+            # WebSocket support for Gotify live notifications
+            header_up Connection {>Connection}
+            header_up Upgrade {>Upgrade}
+        }
+    }
 
-        # Timeouts
-        transport http {
-            read_timeout 60s
-            write_timeout 60s
-            dial_timeout 10s
+    # Rails application
+    handle {
+        reverse_proxy localhost:${port} {
+            # Health check
+            health_uri /up
+            health_interval 10s
+            health_timeout 5s
+
+            # Headers
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Host {host}
+
+            # Timeouts
+            transport http {
+                read_timeout 60s
+                write_timeout 60s
+                dial_timeout 10s
+            }
         }
     }
 
@@ -187,47 +204,6 @@ ${RAILS_HOST} {
 www.${RAILS_HOST} {
     redir https://${RAILS_HOST}{uri} permanent
 }
-
-# Gotify push notification server
-${GOTIFY_HOST} {
-    # Email for Let's Encrypt notifications
-    tls ${ADMIN_EMAIL}
-
-    # Encode responses with compression
-    encode gzip zstd
-
-    # Logging
-    log {
-        output file /var/log/caddy/gotify-access.log {
-            roll_size 100mb
-            roll_keep 10
-            roll_keep_for 720h
-        }
-        format json
-    }
-
-    # Reverse proxy to Gotify (Docker container)
-    reverse_proxy localhost:${GOTIFY_PORT} {
-        # Headers
-        header_up X-Real-IP {remote_host}
-        header_up X-Forwarded-For {remote_host}
-        header_up X-Forwarded-Proto {scheme}
-        header_up X-Forwarded-Host {host}
-
-        # WebSocket support for Gotify
-        header_up Connection {>Connection}
-        header_up Upgrade {>Upgrade}
-    }
-
-    # Security headers
-    header {
-        X-Content-Type-Options "nosniff"
-        X-XSS-Protection "1; mode=block"
-        X-Frame-Options "SAMEORIGIN"
-        Referrer-Policy "strict-origin-when-cross-origin"
-        -Server
-    }
-}
 EOF
   else
     # Development/HTTP only configuration
@@ -248,43 +224,32 @@ ${RAILS_HOST} {
         format json
     }
 
-    # Reverse proxy to Rails application
-    reverse_proxy localhost:${port} {
-        health_uri /up
-        health_interval 10s
-        health_timeout 5s
+    # Gotify push notification server (path-based)
+    handle /gotify* {
+        reverse_proxy localhost:${GOTIFY_PORT} {
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Host {host}
 
-        header_up X-Real-IP {remote_host}
-        header_up X-Forwarded-For {remote_host}
-        header_up X-Forwarded-Proto {scheme}
-        header_up X-Forwarded-Host {host}
-    }
-}
-
-# Gotify push notification server (HTTP)
-${GOTIFY_HOST} {
-    # Disable automatic HTTPS
-    auto_https off
-
-    # Encode responses with compression
-    encode gzip zstd
-
-    # Logging
-    log {
-        output file /var/log/caddy/gotify-access.log
-        format json
+            # WebSocket support for Gotify live notifications
+            header_up Connection {>Connection}
+            header_up Upgrade {>Upgrade}
+        }
     }
 
-    # Reverse proxy to Gotify (Docker container)
-    reverse_proxy localhost:${GOTIFY_PORT} {
-        header_up X-Real-IP {remote_host}
-        header_up X-Forwarded-For {remote_host}
-        header_up X-Forwarded-Proto {scheme}
-        header_up X-Forwarded-Host {host}
+    # Rails application
+    handle {
+        reverse_proxy localhost:${port} {
+            health_uri /up
+            health_interval 10s
+            health_timeout 5s
 
-        # WebSocket support for Gotify
-        header_up Connection {>Connection}
-        header_up Upgrade {>Upgrade}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Host {host}
+        }
     }
 }
 EOF
