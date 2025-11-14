@@ -42,6 +42,8 @@ clone_repository() {
       execute mv "${APP_DIR}" "${backup_dir}"
     else
       info "Using existing application directory"
+      # Ensure correct ownership even for existing directory
+      execute chown -R "${DEPLOY_USER}:${DEPLOY_USER}" "${APP_DIR}"
       return 0
     fi
   fi
