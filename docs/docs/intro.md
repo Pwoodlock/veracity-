@@ -2,46 +2,89 @@
 sidebar_position: 1
 ---
 
-# Tutorial Intro
+# Getting Started with Veracity
 
-Let's discover **Docusaurus in less than 5 minutes**.
+Welcome to **Veracity** - A modern server management platform built with Ruby on Rails and SaltStack.
 
-## Getting Started
+> ⚠️ **ALPHA SOFTWARE** - Version 0.0.1-a is in early development. Features and APIs may change.
 
-Get started by **creating a new site**.
+## Quick Start
 
-Or **try Docusaurus immediately** with **[docusaurus.new](https://docusaurus.new)**.
+Veracity provides a one-line installation script that handles all dependencies and configuration automatically.
 
-### What you'll need
+### Prerequisites
 
-- [Node.js](https://nodejs.org/en/download/) version 20.0 or above:
-  - When installing Node.js, you are recommended to check all checkboxes related to dependencies.
+Before installing Veracity, ensure your system meets these requirements:
 
-## Generate a new site
+- **Operating System**: Ubuntu 20.04/22.04/24.04 LTS or Debian 11/12
+- **CPU**: 2 cores minimum
+- **RAM**: 2GB minimum (4GB recommended)
+- **Disk**: 20GB free space
+- **Network**: Static IP address or FQDN
+- **Access**: Root or sudo privileges
 
-Generate a new Docusaurus site using the **classic template**.
-
-The classic template will automatically be added to your project after you run the command:
-
-```bash
-npm init docusaurus@latest my-website classic
-```
-
-You can type this command into Command Prompt, Powershell, Terminal, or any other integrated terminal of your code editor.
-
-The command also installs all necessary dependencies you need to run Docusaurus.
-
-## Start your site
-
-Run the development server:
+### One-Line Installation
 
 ```bash
-cd my-website
-npm run start
+curl -sSL https://raw.githubusercontent.com/Pwoodlock/veracity-/main/install.sh | sudo bash
 ```
 
-The `cd` command changes the directory you're working with. In order to work with your newly created Docusaurus site, you'll need to navigate the terminal there.
+The installer will:
+1. Detect your operating system
+2. Collect configuration (domain, admin credentials, etc.)
+3. Install all required dependencies
+4. Configure services (PostgreSQL, Redis, SaltStack, Caddy)
+5. Deploy the Veracity application
+6. Set up systemd services and firewall
 
-The `npm run start` command builds your website locally and serves it through a development server, ready for you to view at http://localhost:3000/.
+**Installation time**: Approximately 10-15 minutes
 
-Open `docs/intro.md` (this page) and edit some lines: the site **reloads automatically** and displays your changes.
+### Manual Installation
+
+For more control over the installation process:
+
+```bash
+# Clone the repository
+git clone https://github.com/Pwoodlock/veracity-.git
+cd veracity-
+
+# Run the installer
+sudo ./install.sh
+```
+
+### What Gets Installed
+
+| Component | Version | Purpose |
+|-----------|---------|---------|
+| Ruby | 3.4.7 | Application runtime (Fullstaq precompiled) |
+| Rails | 8.1.1 | Web framework |
+| Node.js | 24 LTS | Asset compilation |
+| PostgreSQL | 14+ | Database |
+| Redis | 7+ | Cache & job queue |
+| SaltStack | 3007.8 | Infrastructure automation |
+| Python | 3.8+ | Salt integrations |
+| Caddy | Latest | Web server with auto-HTTPS |
+
+### After Installation
+
+Once installation completes, you'll receive:
+
+1. **Web Interface URL**: `https://your-domain.com` or `http://your-ip`
+2. **Admin Credentials**: Saved in `/tmp/veracity-install-credentials-*.txt`
+3. **Service Status**: All services running and enabled
+
+### Next Steps
+
+After installation:
+
+1. Access the web interface with your admin credentials
+2. Enable two-factor authentication (2FA) for security
+3. Configure your organization settings in Admin → Settings
+4. Install Salt minions on servers you want to manage
+5. Start managing your infrastructure!
+
+## Need Help?
+
+- **Documentation**: https://pwoodlock.github.io/veracity-/
+- **Issues**: https://github.com/Pwoodlock/veracity-/issues
+- **Discussions**: https://github.com/Pwoodlock/veracity-/discussions
