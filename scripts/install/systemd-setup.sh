@@ -37,7 +37,7 @@ Group=${DEPLOY_USER}
 WorkingDirectory=${APP_DIR}
 Environment=RAILS_ENV=production
 EnvironmentFile=${APP_DIR}/.env.production
-ExecStart=${DEPLOY_HOME}/.rbenv/shims/bundle exec puma -C config/puma.rb
+ExecStart=/usr/local/bin/bundle exec puma -C config/puma.rb
 Restart=always
 RestartSec=10
 StandardOutput=append:${APP_DIR}/log/puma.log
@@ -69,7 +69,7 @@ User=${DEPLOY_USER}
 WorkingDirectory=${APP_DIR}
 Environment=RAILS_ENV=production
 EnvironmentFile=${APP_DIR}/.env.production
-ExecStart=${DEPLOY_HOME}/.rbenv/shims/bundle exec sidekiq -C config/sidekiq.yml
+ExecStart=/usr/local/bin/bundle exec sidekiq -C config/sidekiq.yml
 Restart=always
 RestartSec=10
 StandardOutput=append:${APP_DIR}/log/sidekiq.log

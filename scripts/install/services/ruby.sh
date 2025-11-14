@@ -28,8 +28,37 @@ add_fullstaq_repo_debian() {
   # Install dependencies
   install_packages ca-certificates curl gnupg apt-transport-https
 
-  # Add Fullstaq Ruby GPG key
-  execute curl -fsSL https://raw.githubusercontent.com/fullstaq-labs/fullstaq-ruby-server-edition/main/fullstaq-ruby.asc | gpg --dearmor -o /usr/share/keyrings/fullstaq-ruby.gpg
+  # Add Fullstaq Ruby GPG key with retry logic
+  local gpg_url="https://raw.githubusercontent.com/fullstaq-labs/fullstaq-ruby-server-edition/main/fullstaq-ruby.asc"
+  local gpg_tmp="/tmp/fullstaq-ruby.asc"
+  local max_attempts=3
+  local attempt=1
+
+  while [ $attempt -le $max_attempts ]; do
+    info "Downloading Fullstaq Ruby GPG key (attempt $attempt/$max_attempts)..."
+
+    if curl -fsSL "${gpg_url}" -o "${gpg_tmp}"; then
+      # Verify we got valid GPG data
+      if file "${gpg_tmp}" | grep -qE '(PGP|GPG)'; then
+        execute gpg --dearmor -o /usr/share/keyrings/fullstaq-ruby.gpg < "${gpg_tmp}"
+        rm -f "${gpg_tmp}"
+        success "GPG key downloaded and installed"
+        break
+      else
+        warning "Downloaded file is not valid GPG data"
+      fi
+    else
+      warning "Failed to download GPG key"
+    fi
+
+    if [ $attempt -eq $max_attempts ]; then
+      rm -f "${gpg_tmp}"
+      fatal "Failed to download Fullstaq Ruby GPG key after $max_attempts attempts"
+    fi
+
+    attempt=$((attempt + 1))
+    sleep 5
+  done
 
   # Add repository
   echo "deb [signed-by=/usr/share/keyrings/fullstaq-ruby.gpg] https://apt.fullstaqruby.org $(lsb_release -cs) main" | tee /etc/apt/sources.list.d/fullstaq-ruby.list > /dev/null

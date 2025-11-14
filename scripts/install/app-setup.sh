@@ -24,8 +24,14 @@ fi
 if [[ -z "${DEPLOY_USER:-}" ]]; then
   readonly DEPLOY_USER="deploy"
 fi
+readonly DEPLOY_HOME="/home/${DEPLOY_USER}"
 readonly REPO_URL="${REPO_URL:-https://github.com/Pwoodlock/veracity-.git}"
 readonly REPO_BRANCH="${REPO_BRANCH:-main}"
+
+# Ruby configuration (must match ruby.sh)
+readonly RUBY_VERSION="3.4.7"
+readonly RUBY_VARIANT="jemalloc"
+readonly RUBY_DIR="/usr/local/fullstaq-ruby/versions/ruby-${RUBY_VERSION}-${RUBY_VARIANT}"
 
 #######################################
 # Clone or update repository
@@ -212,8 +218,8 @@ install_gems() {
 
   cd "${APP_DIR}"
 
-  # Helper to run commands with rbenv loaded
-  local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
+  # Helper to run commands with Fullstaq Ruby environment
+  local ruby_cmd="export PATH=\"${RUBY_DIR}/bin:\$PATH\" && export GEM_HOME=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}\" && export GEM_PATH=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}:${RUBY_DIR}/lib/ruby/gems/${RUBY_VERSION%.*}.0\" && "
 
   # Install gems as deploy user with timeout and retry
   # Bundle has built-in retry for gem downloads, but we add timeout protection
@@ -227,7 +233,7 @@ install_gems() {
   echo ""
 
   # Use retry_command for network resilience
-  if ! retry_command 3 5 run_with_timeout 1200 sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle install --jobs=4 --retry=3 --without development test"; then
+  if ! retry_command 3 5 run_with_timeout 1200 sudo -u "${DEPLOY_USER}" bash -c "${ruby_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle install --jobs=4 --retry=3 --without development test"; then
     error "Failed to install gems after multiple attempts"
     error "This may be due to:"
     error "  - Network connectivity issues"
@@ -248,8 +254,8 @@ install_node_packages() {
 
   cd "${APP_DIR}"
 
-  # Helper to run commands with rbenv loaded
-  local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
+  # Helper to run commands with Fullstaq Ruby environment
+  local ruby_cmd="export PATH=\"${RUBY_DIR}/bin:\$PATH\" && export GEM_HOME=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}\" && export GEM_PATH=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}:${RUBY_DIR}/lib/ruby/gems/${RUBY_VERSION%.*}.0\" && "
 
   # Install packages as deploy user with timeout and retry
   # COREPACK_ENABLE_DOWNLOAD_PROMPT=0 disables interactive Corepack prompts
@@ -261,7 +267,7 @@ install_node_packages() {
   echo ""
 
   # Use retry_command for network resilience
-  if ! retry_command 3 5 run_with_timeout 600 sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && COREPACK_ENABLE_DOWNLOAD_PROMPT=0 yarn install --frozen-lockfile"; then
+  if ! retry_command 3 5 run_with_timeout 600 sudo -u "${DEPLOY_USER}" bash -c "${ruby_cmd} cd ${APP_DIR} && COREPACK_ENABLE_DOWNLOAD_PROMPT=0 yarn install --frozen-lockfile"; then
     error "Failed to install Node packages after multiple attempts"
     error "This may be due to:"
     error "  - Network connectivity issues"
@@ -282,8 +288,8 @@ setup_database() {
 
   cd "${APP_DIR}"
 
-  # Helper to run commands with rbenv loaded
-  local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
+  # Helper to run commands with Fullstaq Ruby environment
+  local ruby_cmd="export PATH=\"${RUBY_DIR}/bin:\$PATH\" && export GEM_HOME=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}\" && export GEM_PATH=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}:${RUBY_DIR}/lib/ruby/gems/${RUBY_VERSION%.*}.0\" && "
 
   # Verify database is ready before attempting operations
   info "Verifying PostgreSQL is ready for connections..."
@@ -311,7 +317,7 @@ setup_database() {
 
   # Create database first
   info "Creating database..."
-  if ! sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:create" >> "${LOG_FILE}" 2>&1; then
+  if ! sudo -u "${DEPLOY_USER}" bash -c "${ruby_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:create" >> "${LOG_FILE}" 2>&1; then
     warning "Database creation failed (may already exist)"
     # Don't fail here - database might already exist
   else
@@ -326,7 +332,7 @@ setup_database() {
   info "  • Creating/modifying tables and indexes"
   info "  • Updating schema_migrations table"
   echo ""
-  if ! retry_command 3 2 sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:migrate"; then
+  if ! retry_command 3 2 sudo -u "${DEPLOY_USER}" bash -c "${ruby_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:migrate"; then
     error "Failed to run database migrations after multiple attempts"
     error "This may be due to:"
     error "  - Database connection issues"
@@ -340,7 +346,7 @@ setup_database() {
   # Load seeds if present
   if [ -f "${APP_DIR}/db/seeds.rb" ]; then
     info "Loading database seeds..."
-    sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:seed" >> "${LOG_FILE}" 2>&1 || true
+    sudo -u "${DEPLOY_USER}" bash -c "${ruby_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails db:seed" >> "${LOG_FILE}" 2>&1 || true
   fi
 
   success "Database setup complete"
@@ -361,8 +367,8 @@ precompile_assets() {
     warning "Low disk space ($(($available_disk / 1024))MB available). Asset precompilation may fail."
   fi
 
-  # Helper to run commands with rbenv loaded
-  local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
+  # Helper to run commands with Fullstaq Ruby environment
+  local ruby_cmd="export PATH=\"${RUBY_DIR}/bin:\$PATH\" && export GEM_HOME=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}\" && export GEM_PATH=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}:${RUBY_DIR}/lib/ruby/gems/${RUBY_VERSION%.*}.0\" && "
 
   # Precompile assets as deploy user with timeout
   info "Running asset precompilation (timeout: 15 minutes)..."
@@ -372,7 +378,7 @@ precompile_assets() {
   info "  • Generating manifest files with fingerprints"
   info "  • Compressing assets with gzip"
   echo ""
-  if ! run_with_timeout 900 sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails assets:precompile"; then
+  if ! run_with_timeout 900 sudo -u "${DEPLOY_USER}" bash -c "${ruby_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails assets:precompile"; then
     error "Failed to precompile assets"
     error "This may be due to:"
     error "  - Insufficient disk space"
@@ -394,8 +400,8 @@ create_admin_user() {
 
   cd "${APP_DIR}"
 
-  # Helper to run commands with rbenv loaded
-  local rbenv_cmd="export PATH=\"\$HOME/.rbenv/bin:\$PATH\" && eval \"\$(rbenv init -)\" && "
+  # Helper to run commands with Fullstaq Ruby environment
+  local ruby_cmd="export PATH=\"${RUBY_DIR}/bin:\$PATH\" && export GEM_HOME=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}\" && export GEM_PATH=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}:${RUBY_DIR}/lib/ruby/gems/${RUBY_VERSION%.*}.0\" && "
 
   # Create temporary Ruby script to avoid quoting issues
   local script_file="${APP_DIR}/tmp/create_admin_user.rb"
@@ -416,7 +422,7 @@ EOF
 
   execute chown "${DEPLOY_USER}:${DEPLOY_USER}" "${script_file}"
 
-  if timeout 60 sudo -u "${DEPLOY_USER}" bash -c "${rbenv_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails runner ${script_file}" >> "${LOG_FILE}" 2>&1; then
+  if timeout 60 sudo -u "${DEPLOY_USER}" bash -c "${ruby_cmd} cd ${APP_DIR} && RAILS_ENV=production bundle exec rails runner ${script_file}" >> "${LOG_FILE}" 2>&1; then
     success "Admin user created: ${ADMIN_EMAIL}"
     execute rm -f "${script_file}"
   else
