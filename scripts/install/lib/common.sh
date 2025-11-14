@@ -430,8 +430,8 @@ progress_bar() {
   local empty=$((50 - filled))
 
   printf "\r["
-  printf "%${filled}s" | tr ' ' '█'
-  printf "%${empty}s" | tr ' ' '░'
+  printf "%${filled}s" | tr ' ' '#'
+  printf "%${empty}s" | tr ' ' '-'
   printf "] %3d%% - %s" "$percent" "$message"
 
   if [ "$current" -eq "$total" ]; then
