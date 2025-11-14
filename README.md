@@ -11,7 +11,7 @@
 
 ---
 
-📚 **[Read the Documentation](https://pwoodlock.github.io/veracity-/)** | 🚀 **[Quick Start Guide](https://pwoodlock.github.io/veracity-/docs/intro)**
+**[Read the Documentation](https://pwoodlock.github.io/veracity-/)** | **[Quick Start Guide](https://pwoodlock.github.io/veracity-/docs/intro)**
 
 </div>
 
