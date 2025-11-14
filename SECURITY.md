@@ -12,7 +12,7 @@ currently being supported with security updates.
 
 ## Reporting a Vulnerability
 
-You can contact me directly via Github Issues or via my email @ patrick at devsec .ie 
+You can contact me directly via  my email @ patrick at devsec .ie 
 (of course just combine the email address and insert the @ symbol) 
 
 I update any vulnerabilities as soon as it's accepted as quick as possible.
