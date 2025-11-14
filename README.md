@@ -9,6 +9,10 @@
 [![Node.js Version](https://img.shields.io/badge/Node.js-24_LTS-339933.svg)](https://nodejs.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
+---
+
+📚 **[Read the Documentation](https://pwoodlock.github.io/veracity-/)** | 🚀 **[Quick Start Guide](https://pwoodlock.github.io/veracity-/docs/intro)**
+
 </div>
 
 # Veracity
