@@ -36,8 +36,9 @@ User=${DEPLOY_USER}
 Group=${DEPLOY_USER}
 WorkingDirectory=${APP_DIR}
 Environment=RAILS_ENV=production
+Environment=PATH=${DEPLOY_HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin
 EnvironmentFile=${APP_DIR}/.env.production
-ExecStart=/usr/local/bin/bundle exec puma -C config/puma.rb
+ExecStart=/bin/bash -lc 'eval "$(mise activate bash)" && bundle exec puma -C config/puma.rb'
 Restart=always
 RestartSec=10
 StandardOutput=append:${APP_DIR}/log/puma.log
@@ -68,8 +69,9 @@ Type=simple
 User=${DEPLOY_USER}
 WorkingDirectory=${APP_DIR}
 Environment=RAILS_ENV=production
+Environment=PATH=${DEPLOY_HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin
 EnvironmentFile=${APP_DIR}/.env.production
-ExecStart=/usr/local/bin/bundle exec sidekiq -C config/sidekiq.yml
+ExecStart=/bin/bash -lc 'eval "$(mise activate bash)" && bundle exec sidekiq -C config/sidekiq.yml'
 Restart=always
 RestartSec=10
 StandardOutput=append:${APP_DIR}/log/sidekiq.log

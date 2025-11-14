@@ -29,9 +29,7 @@ readonly REPO_URL="${REPO_URL:-https://github.com/Pwoodlock/veracity-.git}"
 readonly REPO_BRANCH="${REPO_BRANCH:-main}"
 
 # Ruby configuration (must match ruby.sh)
-readonly RUBY_VERSION="3.3.5"
-readonly RUBY_VARIANT="jemalloc"
-readonly RUBY_DIR="/usr/local/fullstaq-ruby/versions/ruby-${RUBY_VERSION}-${RUBY_VARIANT}"
+readonly RUBY_VERSION="3.3.6"
 
 #######################################
 # Clone or update repository
@@ -218,8 +216,8 @@ install_gems() {
 
   cd "${APP_DIR}"
 
-  # Helper to run commands with Fullstaq Ruby environment
-  local ruby_cmd="export PATH=\"${RUBY_DIR}/bin:\$PATH\" && export GEM_HOME=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}\" && export GEM_PATH=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}:${RUBY_DIR}/lib/ruby/gems/${RUBY_VERSION%.*}.0\" && "
+  # Helper to run commands with Mise Ruby environment (Rails recommended)
+  local ruby_cmd="export PATH=\"\$HOME/.local/bin:\$PATH\" && eval \"\$(mise activate bash)\" && "
 
   # Install gems as deploy user with timeout and retry
   # Bundle has built-in retry for gem downloads, but we add timeout protection
@@ -254,8 +252,8 @@ install_node_packages() {
 
   cd "${APP_DIR}"
 
-  # Helper to run commands with Fullstaq Ruby environment
-  local ruby_cmd="export PATH=\"${RUBY_DIR}/bin:\$PATH\" && export GEM_HOME=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}\" && export GEM_PATH=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}:${RUBY_DIR}/lib/ruby/gems/${RUBY_VERSION%.*}.0\" && "
+  # Helper to run commands with Mise Ruby environment (Rails recommended)
+  local ruby_cmd="export PATH=\"\$HOME/.local/bin:\$PATH\" && eval \"\$(mise activate bash)\" && "
 
   # Install packages as deploy user with timeout and retry
   # COREPACK_ENABLE_DOWNLOAD_PROMPT=0 disables interactive Corepack prompts
@@ -288,8 +286,8 @@ setup_database() {
 
   cd "${APP_DIR}"
 
-  # Helper to run commands with Fullstaq Ruby environment
-  local ruby_cmd="export PATH=\"${RUBY_DIR}/bin:\$PATH\" && export GEM_HOME=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}\" && export GEM_PATH=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}:${RUBY_DIR}/lib/ruby/gems/${RUBY_VERSION%.*}.0\" && "
+  # Helper to run commands with Mise Ruby environment (Rails recommended)
+  local ruby_cmd="export PATH=\"\$HOME/.local/bin:\$PATH\" && eval \"\$(mise activate bash)\" && "
 
   # Verify database is ready before attempting operations
   info "Verifying PostgreSQL is ready for connections..."
@@ -367,8 +365,8 @@ precompile_assets() {
     warning "Low disk space ($(($available_disk / 1024))MB available). Asset precompilation may fail."
   fi
 
-  # Helper to run commands with Fullstaq Ruby environment
-  local ruby_cmd="export PATH=\"${RUBY_DIR}/bin:\$PATH\" && export GEM_HOME=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}\" && export GEM_PATH=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}:${RUBY_DIR}/lib/ruby/gems/${RUBY_VERSION%.*}.0\" && "
+  # Helper to run commands with Mise Ruby environment (Rails recommended)
+  local ruby_cmd="export PATH=\"\$HOME/.local/bin:\$PATH\" && eval \"\$(mise activate bash)\" && "
 
   # Precompile assets as deploy user with timeout
   info "Running asset precompilation (timeout: 15 minutes)..."
@@ -400,8 +398,8 @@ create_admin_user() {
 
   cd "${APP_DIR}"
 
-  # Helper to run commands with Fullstaq Ruby environment
-  local ruby_cmd="export PATH=\"${RUBY_DIR}/bin:\$PATH\" && export GEM_HOME=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}\" && export GEM_PATH=\"${DEPLOY_HOME}/.gem/ruby/${RUBY_VERSION}:${RUBY_DIR}/lib/ruby/gems/${RUBY_VERSION%.*}.0\" && "
+  # Helper to run commands with Mise Ruby environment (Rails recommended)
+  local ruby_cmd="export PATH=\"\$HOME/.local/bin:\$PATH\" && eval \"\$(mise activate bash)\" && "
 
   # Create temporary Ruby script to avoid quoting issues
   local script_file="${APP_DIR}/tmp/create_admin_user.rb"
