@@ -31,7 +31,7 @@ After=network.target postgresql.service redis.service salt-master.service salt-a
 Requires=postgresql.service redis.service
 
 [Service]
-Type=notify
+Type=simple
 User=${DEPLOY_USER}
 Group=${DEPLOY_USER}
 WorkingDirectory=${APP_DIR}
@@ -64,7 +64,7 @@ After=network.target redis.service postgresql.service salt-api.service
 Requires=redis.service postgresql.service
 
 [Service]
-Type=notify
+Type=simple
 User=${DEPLOY_USER}
 WorkingDirectory=${APP_DIR}
 Environment=RAILS_ENV=production
