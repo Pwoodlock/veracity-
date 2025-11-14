@@ -22,9 +22,8 @@
 ### Supported Operating Systems
 - **Ubuntu** 20.04 LTS, 22.04 LTS, 24.04 LTS
 - **Debian** 11 (Bullseye), 12 (Bookworm)
-- **Rocky Linux** 8, 9
-- **AlmaLinux** 8, 9
-- **RHEL** 8, 9
+
+> 📋 **Note**: RHEL-based distributions (Rocky Linux, AlmaLinux, RHEL) support is planned for future releases.
 
 ### Software Stack
 | Component | Version | Purpose |
