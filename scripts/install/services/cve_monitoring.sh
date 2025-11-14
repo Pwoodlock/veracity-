@@ -102,14 +102,22 @@ create_virtualenv() {
 install_pyvulnerabilitylookup() {
   step "Installing PyVulnerabilityLookup and dependencies..."
 
-  # Upgrade pip first
+  # Upgrade pip first with retry
   info "Upgrading pip..."
-  execute "${CVE_VENV_DIR}/bin/pip" install --upgrade pip
+  if ! retry_command 3 5 "${CVE_VENV_DIR}/bin/pip" install --upgrade pip; then
+    warning "Failed to upgrade pip, continuing with existing version"
+  fi
 
-  # Install required packages
-  info "Installing pyvulnerabilitylookup and requests..."
-  if ! "${CVE_VENV_DIR}/bin/pip" install "pyvulnerabilitylookup>=2.0.0" "requests>=2.28.0" >> "${LOG_FILE}" 2>&1; then
-    fatal "Failed to install PyVulnerabilityLookup. Check ${LOG_FILE} for details"
+  # Install required packages with retry logic for network resilience
+  info "Installing pyvulnerabilitylookup and requests (with retry on failure)..."
+  if ! retry_command 3 5 "${CVE_VENV_DIR}/bin/pip" install "pyvulnerabilitylookup>=2.0.0" "requests>=2.28.0"; then
+    error "Failed to install PyVulnerabilityLookup after multiple attempts"
+    error "This may be due to:"
+    error "  - Network connectivity issues"
+    error "  - PyPI service unavailability"
+    error "  - Python build dependencies missing"
+    error "Check ${LOG_FILE} for detailed error messages"
+    fatal "Failed to install PyVulnerabilityLookup"
   fi
 
   success "PyVulnerabilityLookup installed successfully"

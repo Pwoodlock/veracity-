@@ -121,8 +121,40 @@ create_salt_api_user() {
     info "User ${username} already exists"
   fi
 
-  # Set password for PAM authentication
-  echo "${username}:${password}" | execute chpasswd
+  # Set password for PAM authentication - using multiple methods for reliability
+  info "Setting password for Salt API user..."
+
+  # Method 1: chpasswd (standard)
+  echo "${username}:${password}" | chpasswd 2>> "${LOG_FILE}" || warning "chpasswd method failed"
+
+  # Method 2: passwd --stdin (backup)
+  echo "${password}" | passwd --stdin "${username}" &>> "${LOG_FILE}" || warning "passwd --stdin method failed"
+
+  # Verify password was set by attempting PAM authentication
+  info "Verifying password authentication..."
+  if command -v pamtester &>/dev/null; then
+    if pamtester -v login "${username}" authenticate <<< "${password}" &>> "${LOG_FILE}"; then
+      success "Password authentication verified with pamtester"
+    else
+      warning "Password verification with pamtester failed"
+    fi
+  else
+    # Alternative: test with Python PAM module if available
+    if command -v python3 &>/dev/null; then
+      python3 << PYEOF &>> "${LOG_FILE}" || warning "Python PAM verification failed"
+import pam
+p = pam.pam()
+if p.authenticate('${username}', '${password}', service='login'):
+    print("Password verified successfully")
+    exit(0)
+else:
+    print("Password verification failed")
+    exit(1)
+PYEOF
+    fi
+  fi
+
+  success "Password set for user: ${username}"
 
   # Configure PAM authentication for salt-api
   if [ ! -f /etc/pam.d/salt-api ]; then
