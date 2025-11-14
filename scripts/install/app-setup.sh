@@ -158,7 +158,10 @@ fi)
 # ============================================================================
 GOTIFY_ENABLED=${GOTIFY_ENABLED:-true}
 GOTIFY_URL=${GOTIFY_URL:-http://localhost:8080}
+GOTIFY_ADMIN_URL=${GOTIFY_URL}
 GOTIFY_APP_TOKEN=${GOTIFY_APP_TOKEN:-}
+GOTIFY_ADMIN_USERNAME=${GOTIFY_ADMIN_USER:-admin}
+GOTIFY_ADMIN_PASSWORD=${GOTIFY_ADMIN_PASSWORD:-}
 GOTIFY_SSL_VERIFY=true
 
 # ============================================================================
