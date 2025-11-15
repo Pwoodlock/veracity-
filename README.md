@@ -3,15 +3,14 @@
 ![Veracity Logo](docs/static/img/logo.svg)
 
 [![Veracity Version](https://img.shields.io/badge/Veracity-0.0.1--a-blue.svg)](https://github.com/Pwoodlock/veracity-)
-[![Ruby Version](https://img.shields.io/badge/Ruby-3.4.7-red.svg)](https://www.ruby-lang.org/)
+[![Ruby Version](https://img.shields.io/badge/Ruby-3.3.6-red.svg)](https://www.ruby-lang.org/)
 [![Rails Version](https://img.shields.io/badge/Rails-8.1.1-red.svg)](https://rubyonrails.org/)
 [![SaltStack Version](https://img.shields.io/badge/SaltStack-3007.8-00c7b7.svg)](https://saltproject.io/)
 [![Node.js Version](https://img.shields.io/badge/Node.js-24_LTS-339933.svg)](https://nodejs.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 
-[![Documentation](https://img.shields.io/badge/Documentation-Read-blue?style=for-the-badge)](https://pwoodlock.github.io/veracity-/)
-[![Quick Start](https://img.shields.io/badge/Quick_Start-Guide-green?style=for-the-badge)](https://pwoodlock.github.io/veracity-/docs/intro)
+**[📚 Documentation](https://pwoodlock.github.io/veracity-/)** | **[🚀 Quick Start Guide](https://pwoodlock.github.io/veracity-/docs/intro)**
 
 </div>
 
@@ -32,7 +31,7 @@
 ### Software Stack
 | Component | Version | Purpose |
 |-----------|---------|---------|
-| **Ruby** | 3.4.7 | Application runtime (via Fullstaq precompiled binaries) |
+| **Ruby** | 3.3.6 | Application runtime (via Mise version manager) |
 | **Rails** | 8.1.1 | Web application framework |
 | **Node.js** | 24 LTS | JavaScript runtime for asset compilation |
 | **PostgreSQL** | 14+ | Primary database |
@@ -48,7 +47,7 @@
 - **Network**: Static IP or FQDN for production deployment
 
 ### Additional Features
-- **Gotify** (Docker) - Push notifications
+- **Gotify** (Binary) - Push notifications with path-based reverse proxy
 - **BorgBackup** - Server backup & cloning
 - **CVE Scanner** - Vulnerability monitoring
 - **API Integrations**: Hetzner Cloud, Proxmox VE
