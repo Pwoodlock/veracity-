@@ -21,7 +21,13 @@ function HomepageHeader() {
           <Link
             className="button button--secondary button--lg"
             to="/docs/intro">
-            Docusaurus Tutorial - 5min ⏱️
+            Get Started 🚀
+          </Link>
+          <Link
+            className="button button--outline button--secondary button--lg"
+            to="https://github.com/Pwoodlock/veracity-"
+            style={{marginLeft: '1rem'}}>
+            View on GitHub
           </Link>
         </div>
       </div>

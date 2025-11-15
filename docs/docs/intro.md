@@ -56,7 +56,7 @@ sudo ./install.sh
 
 | Component | Version | Purpose |
 |-----------|---------|---------|
-| Ruby | 3.4.7 | Application runtime (Fullstaq precompiled) |
+| Ruby | 3.3.6 | Application runtime (via Mise version manager) |
 | Rails | 8.1.1 | Web framework |
 | Node.js | 24 LTS | Asset compilation |
 | PostgreSQL | 14+ | Database |
@@ -64,6 +64,7 @@ sudo ./install.sh
 | SaltStack | 3007.8 | Infrastructure automation |
 | Python | 3.8+ | Salt integrations |
 | Caddy | Latest | Web server with auto-HTTPS |
+| Gotify | Latest | Push notifications (binary) |
 
 ### After Installation
 

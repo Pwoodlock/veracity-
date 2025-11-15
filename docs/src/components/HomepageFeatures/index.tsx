@@ -11,32 +11,32 @@ type FeatureItem = {
 
 const FeatureList: FeatureItem[] = [
   {
-    title: 'Easy to Use',
+    title: 'One-Click Installation',
     Svg: require('@site/static/img/undraw_docusaurus_mountain.svg').default,
     description: (
       <>
-        Docusaurus was designed from the ground up to be easily installed and
-        used to get your website up and running quickly.
+        Get up and running in minutes with our automated installer. One command installs
+        Ruby, Rails, PostgreSQL, Redis, SaltStack, and Caddy with automatic HTTPS.
       </>
     ),
   },
   {
-    title: 'Focus on What Matters',
+    title: 'SaltStack Integration',
     Svg: require('@site/static/img/undraw_docusaurus_tree.svg').default,
     description: (
       <>
-        Docusaurus lets you focus on your docs, and we&apos;ll do the chores. Go
-        ahead and move your docs into the <code>docs</code> directory.
+        Powerful infrastructure automation with SaltStack 3007.8. Manage configurations,
+        execute commands, and orchestrate deployments across your entire server fleet.
       </>
     ),
   },
   {
-    title: 'Powered by React',
+    title: 'Modern Rails Stack',
     Svg: require('@site/static/img/undraw_docusaurus_react.svg').default,
     description: (
       <>
-        Extend or customize your website layout by reusing React. Docusaurus can
-        be extended while reusing the same header and footer.
+        Built with Rails 8.1, Ruby 3.3.6 (via Mise), PostgreSQL, Redis, and Caddy.
+        Push notifications via Gotify, vulnerability scanning, and API integrations included.
       </>
     ),
   },
