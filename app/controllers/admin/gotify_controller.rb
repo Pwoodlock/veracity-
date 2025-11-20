@@ -284,11 +284,11 @@ module Admin
       begin
         # Check if any ENV overrides are active
         env_overrides = []
-        env_overrides << 'URL' if SystemSetting.env_override?('gotify_admin_url')
-        env_overrides << 'Username' if SystemSetting.env_override?('gotify_admin_username')
-        env_overrides << 'Password' if SystemSetting.env_override?('gotify_admin_password')
-        env_overrides << 'Enabled' if SystemSetting.env_override?('gotify_enabled')
-        env_overrides << 'SSL Verification' if SystemSetting.env_override?('gotify_ssl_verify')
+        env_overrides << "URL" if SystemSetting.env_override?("gotify_admin_url")
+        env_overrides << "Username" if SystemSetting.env_override?("gotify_admin_username")
+        env_overrides << "Password" if SystemSetting.env_override?("gotify_admin_password")
+        env_overrides << "Enabled" if SystemSetting.env_override?("gotify_enabled")
+        env_overrides << "SSL Verification" if SystemSetting.env_override?("gotify_ssl_verify")
 
         if env_overrides.any?
           flash[:warning] = "Some settings (#{env_overrides.join(', ')}) are controlled by environment variables and cannot be changed via UI."
