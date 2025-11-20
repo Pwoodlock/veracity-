@@ -160,7 +160,7 @@ journalctl -u server-manager -n 50 --no-pager
 
 After successful installation:
 
-1. [Initial Configuration](./configuration.md)
-2. [Install Salt Minions](./minions.md)
-3. [Security Hardening](./security.md)
-4. [Backup Configuration](./backup.md)
+1. Configure your server settings in the admin panel
+2. Install Salt minions on target servers
+3. Review security settings and harden your installation
+4. Set up backup schedules for your data

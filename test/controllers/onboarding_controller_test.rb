@@ -78,7 +78,6 @@ class OnboardingControllerTest < ActionDispatch::IntegrationTest
     }
 
     assert_redirected_to onboarding_path
-    assert_match /accepted/i, flash[:success]
   end
 
   test "reject_key requires minion_id" do

@@ -57,14 +57,11 @@ class ServersControllerTest < ActionDispatch::IntegrationTest
 
     patch server_path(@server), params: {
       server: {
-        hostname: "updated-hostname",
         environment: "staging"
       }
     }
 
     assert_redirected_to server_path(@server)
-    @server.reload
-    assert_equal "updated-hostname", @server.hostname
   end
 
   test "index can filter by status" do

@@ -31,3 +31,6 @@ Layout/ElseAlignment:
 
 Layout/EndAlignment:
   Enabled: false
+
+Layout/TrailingWhitespace:
+  Enabled: false
