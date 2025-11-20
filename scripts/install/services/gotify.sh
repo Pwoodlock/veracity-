@@ -96,6 +96,12 @@ setup_gotify_directories() {
 install_gotify_binary() {
   step "Installing Gotify binary..."
 
+  # Ensure unzip is installed
+  if ! command -v unzip &>/dev/null; then
+    info "Installing unzip..."
+    install_packages unzip
+  fi
+
   local platform
   platform=$(detect_platform)
   info "Detected platform: ${platform}"
