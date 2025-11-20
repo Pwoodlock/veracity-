@@ -28,7 +28,11 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3.6'
-          bundler-cache: true
+
+      - name: Install dependencies
+        run: |
+          bundle config set --local path vendor/bundle
+          bundle install --jobs 4 --retry 3
 
       - name: Run RuboCop
         run: bundle exec rubocop --format github
@@ -44,7 +48,11 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3.6'
-          bundler-cache: true
+
+      - name: Install dependencies
+        run: |
+          bundle config set --local path vendor/bundle
+          bundle install --jobs 4 --retry 3
 
       - name: Run Brakeman
         run: bundle exec brakeman -q --no-pager --format github
@@ -85,7 +93,11 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3.6'
-          bundler-cache: true
+
+      - name: Install dependencies
+        run: |
+          bundle config set --local path vendor/bundle
+          bundle install --jobs 4 --retry 3
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -151,7 +163,11 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3.6'
-          bundler-cache: true
+
+      - name: Install dependencies
+        run: |
+          bundle config set --local path vendor/bundle
+          bundle install --jobs 4 --retry 3
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -222,7 +238,11 @@ jobs:
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.3.6'
-          bundler-cache: true
+
+      - name: Install dependencies
+        run: |
+          bundle config set --local path vendor/bundle
+          bundle install --jobs 4 --retry 3
 
       - name: Setup database
         run: |
