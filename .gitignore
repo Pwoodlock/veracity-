@@ -300,3 +300,5 @@ docs/build/
 salt/
 .claude_context.md
 NoGit4u/
+.claude/
+agent-os/
