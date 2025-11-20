@@ -249,19 +249,50 @@ class TaskExecutionJob < ApplicationJob
       Timeout.timeout(timeout) do
         stdout, stderr, status = Open3.capture3(salt_cmd)
 
-        if status.success?
-          # Parse raw JSON data
-          raw_data = begin
-            JSON.parse(stdout)
-          rescue JSON::ParserError
-            nil
-          end
+        # Parse raw JSON data regardless of exit status
+        # Salt returns exit code 1 if any minion doesn't respond, but we still get partial results
+        raw_data = begin
+          JSON.parse(stdout)
+        rescue JSON::ParserError
+          nil
+        end
 
+        if status.success?
           {
             success: true,
             output: parse_salt_output(stdout, command),
             raw_data: raw_data
           }
+        elsif raw_data && raw_data.any?
+          # Partial success - some minions responded, some didn't
+          # Check for actual responses vs timeouts
+          responding = raw_data.select { |_, v| !v.nil? && v != false }
+          not_responding = raw_data.select { |_, v| v.nil? || v == false }
+
+          if responding.any?
+            # We have some successful results - report partial success
+            output = parse_salt_output(stdout, command)
+
+            if not_responding.any?
+              # Add warning about non-responding minions
+              warning = "\n\n⚠️ Warning: #{not_responding.keys.size} minion(s) did not respond:\n"
+              warning += not_responding.keys.map { |m| "  • #{m}" }.join("\n")
+              output += warning
+            end
+
+            {
+              success: true,
+              output: output,
+              raw_data: raw_data,
+              partial: not_responding.any?
+            }
+          else
+            # No minions responded at all
+            {
+              success: false,
+              error: "No minions responded. All targeted minions may be offline or unreachable."
+            }
+          end
         else
           {
             success: false,
