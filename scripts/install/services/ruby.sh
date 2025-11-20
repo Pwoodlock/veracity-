@@ -37,6 +37,11 @@ create_deploy_user() {
     execute usermod -aG www-data "${DEPLOY_USER}"
   fi
 
+  # Configure passwordless sudo for Salt commands
+  info "Configuring sudo access for Salt commands..."
+  echo "${DEPLOY_USER} ALL=(ALL) NOPASSWD: /usr/bin/salt, /usr/bin/salt-key, /usr/bin/salt-call, /usr/bin/salt-run" > /etc/sudoers.d/deploy-salt
+  chmod 440 /etc/sudoers.d/deploy-salt
+
   success "Deploy user created: ${DEPLOY_USER}"
 }
 
