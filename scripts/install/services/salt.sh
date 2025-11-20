@@ -286,6 +286,15 @@ external_auth:
       - '@wheel'
       - '@runner'
       - '@jobs'
+
+# Enable netapi clients (required for Salt 3007+)
+netapi_enable_clients:
+  - local
+  - local_async
+  - runner
+  - runner_async
+  - wheel
+  - wheel_async
 EOF
 
   success "Salt API configuration created"
