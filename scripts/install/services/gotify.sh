@@ -193,7 +193,7 @@ After=network.target
 Type=simple
 User=${GOTIFY_USER}
 Group=${GOTIFY_USER}
-WorkingDirectory=${GOTIFY_INSTALL_DIR}
+WorkingDirectory=${GOTIFY_DATA_DIR}
 ExecStart=${GOTIFY_INSTALL_DIR}/gotify
 Environment="GOTIFY_SERVER_PORT=${GOTIFY_PORT}"
 Environment="GOTIFY_SERVER_LISTENADDR=127.0.0.1"
