@@ -544,8 +544,8 @@ validate_phase_prerequisites() {
       ;;
 
     "Application")
-      # Check if Ruby is installed
-      if ! command -v ruby >/dev/null 2>&1; then
+      # Check if Ruby is installed (via mise for deploy user)
+      if ! sudo -u deploy bash -c 'export PATH="$HOME/.local/bin:$PATH" && eval "$($HOME/.local/bin/mise activate bash)" && command -v ruby' >/dev/null 2>&1; then
         error "Ruby is not installed"
         return 1
       fi
