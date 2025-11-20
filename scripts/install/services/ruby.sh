@@ -75,10 +75,37 @@ install_mise() {
     return 0
   fi
 
-  # Install Mise via official installer
-  execute sudo -u "${DEPLOY_USER}" bash -c "curl https://mise.run | sh"
+  # Install Mise via official installer with retry logic
+  local max_attempts=5
+  local attempt=1
+  local delay=5
 
-  success "Mise installed"
+  while [ $attempt -le $max_attempts ]; do
+    info "Attempting to download Mise installer (attempt ${attempt}/${max_attempts})..."
+
+    # Download and execute the installer with proper error handling
+    if sudo -u "${DEPLOY_USER}" bash -c "curl -fsSL --retry 3 --retry-delay 2 https://mise.run | sh"; then
+      # Verify mise was actually installed
+      if sudo -u "${DEPLOY_USER}" bash -c "test -x \"\$HOME/.local/bin/mise\""; then
+        success "Mise installed"
+        return 0
+      else
+        error "Mise installer ran but binary not found"
+      fi
+    else
+      error "Failed to download/install Mise (attempt ${attempt}/${max_attempts})"
+    fi
+
+    if [ $attempt -lt $max_attempts ]; then
+      info "Retrying in ${delay} seconds..."
+      sleep $delay
+      delay=$((delay * 2))  # Exponential backoff
+    fi
+
+    attempt=$((attempt + 1))
+  done
+
+  fatal "Failed to install Mise after ${max_attempts} attempts. The mise.run service may be temporarily unavailable."
 }
 
 #######################################
