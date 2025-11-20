@@ -123,14 +123,35 @@ install_gotify_binary() {
   info "Extracting Gotify binary..."
   execute unzip -q "${temp_dir}/gotify.zip" -d "${temp_dir}"
 
-  # Find the gotify binary (name varies by platform)
+  # List extracted files for debugging
+  info "Files extracted:"
+  find "${temp_dir}" -type f | while read -r file; do
+    info "  - $(basename "$file")"
+  done
+
+  # Find the gotify binary (name varies by platform and version)
   local binary_name
-  binary_name=$(find "${temp_dir}" -name "gotify-${platform}" -type f)
+  # Try multiple possible patterns
+  binary_name=$(find "${temp_dir}" -name "gotify-${platform}" -type f 2>/dev/null || true)
+
+  # If not found, try without the platform suffix (some versions just use "gotify")
+  if [ -z "$binary_name" ]; then
+    binary_name=$(find "${temp_dir}" -name "gotify" -type f 2>/dev/null || true)
+  fi
+
+  # If still not found, try any executable file starting with "gotify"
+  if [ -z "$binary_name" ]; then
+    binary_name=$(find "${temp_dir}" -name "gotify*" -type f -perm /111 2>/dev/null | head -1 || true)
+  fi
 
   if [ -z "$binary_name" ]; then
+    error "Available files in archive:"
+    find "${temp_dir}" -type f -exec ls -la {} \; 2>/dev/null || true
     rm -rf "${temp_dir}"
     fatal "Gotify binary not found in archive"
   fi
+
+  info "Found binary: $(basename "$binary_name")"
 
   # Install binary
   execute mv "${binary_name}" "${GOTIFY_INSTALL_DIR}/gotify"
