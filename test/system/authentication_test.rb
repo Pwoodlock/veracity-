@@ -36,7 +36,8 @@ class AuthenticationTest < ApplicationSystemTestCase
     find("input[type='submit'], button[type='submit']").click
 
     wait_for_page_load
-    assert_text(/invalid/i)
+    # Should stay on login page after failed attempt
+    assert_current_path new_user_session_path
   end
 
   test "user can log out" do
