@@ -169,7 +169,7 @@ install_ruby_via_mise() {
 install_bundler() {
   step "Installing bundler..."
 
-  execute sudo -u "${DEPLOY_USER}" bash -c "export PATH=\"\$HOME/.local/bin:\$PATH\" && eval \"\$(mise activate bash)\" && gem install bundler --no-document"
+  execute sudo -u "${DEPLOY_USER}" bash -c "export PATH=\"\$HOME/.local/bin:\$PATH\" && eval \"\$(\$HOME/.local/bin/mise activate bash)\" && gem install bundler --no-document"
 
   success "Bundler installed"
 }
@@ -199,7 +199,8 @@ EOF
 verify_ruby() {
   step "Verifying Ruby installation..."
 
-  local ruby_cmd="export PATH=\"\$HOME/.local/bin:\$PATH\" && eval \"\$(mise activate bash)\" && "
+  # Use full path to mise for non-interactive shell
+  local ruby_cmd="export PATH=\"\$HOME/.local/bin:\$PATH\" && eval \"\$(\$HOME/.local/bin/mise activate bash)\" && "
 
   local ruby_version
   ruby_version=$(sudo -u "${DEPLOY_USER}" bash -c "${ruby_cmd} ruby -v")
