@@ -38,6 +38,6 @@ class DashboardControllerTest < ActionDispatch::IntegrationTest
     get dashboard_path
 
     # Should have Action Cable meta tag for real-time updates
-    assert_select "meta[name='action-cable-url']", false # or true depending on setup
+    assert_select "meta[name='action-cable-url']"
   end
 end

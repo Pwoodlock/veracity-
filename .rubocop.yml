@@ -9,3 +9,25 @@ Style/StringLiterals:
 
 Style/StringLiteralsInInterpolation:
   Enabled: false
+
+# Existing codebase doesn't follow these rules
+Layout/SpaceInsideArrayLiteralBrackets:
+  Enabled: false
+
+Layout/TrailingEmptyLines:
+  Enabled: false
+
+Layout/EmptyLinesAroundMethodBody:
+  Enabled: false
+
+Layout/EmptyLinesAroundClassBody:
+  Enabled: false
+
+Style/RedundantReturn:
+  Enabled: false
+
+Layout/ElseAlignment:
+  Enabled: false
+
+Layout/EndAlignment:
+  Enabled: false

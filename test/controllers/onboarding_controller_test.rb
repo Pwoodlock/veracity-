@@ -53,7 +53,7 @@ class OnboardingControllerTest < ActionDispatch::IntegrationTest
 
     post accept_key_onboarding_path, params: { fingerprint: "aa:bb:cc" }
     assert_redirected_to onboarding_path
-    assert_equal "Minion ID is required", flash[:error]
+    assert_equal "Minion ID and fingerprint are required", flash[:error]
   end
 
   test "accept_key calls SaltService" do

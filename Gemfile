@@ -101,6 +101,5 @@ group :test do
   gem "webmock", "~> 3.19"            # HTTP request stubbing
   gem "mocha", "~> 2.1"               # Mocking/stubbing
   gem "simplecov", "~> 0.22", require: false  # Code coverage reporting
-  gem "shoulda-context", "~> 2.0"     # Context blocks for tests
   gem "shoulda-matchers", "~> 6.0"    # RSpec-style matchers for Minitest
 end
