@@ -47,8 +47,8 @@ module Admin
         @applications = []
       end
 
-      @gotify_url = SystemSetting.get('gotify_admin_url', 'http://localhost:8080')
-      @gotify_enabled = SystemSetting.get('gotify_enabled', false)
+      @gotify_url = SystemSetting.get("gotify_admin_url", "http://localhost:8080")
+      @gotify_enabled = SystemSetting.get("gotify_enabled", false)
     end
 
     # ============================================================================
@@ -63,7 +63,7 @@ module Admin
     def create_application
       result = @gotify.create_application(
         name: params[:name],
-        description: params[:description] || '',
+        description: params[:description] || "",
         default_priority: params[:default_priority]&.to_i || 5
       )
 
@@ -117,7 +117,7 @@ module Admin
       result = @gotify.create_user(
         name: params[:name],
         password: params[:password],
-        admin: params[:admin] == '1' || params[:admin] == 'true'
+        admin: params[:admin] == "1" || params[:admin] == "true"
       )
 
       if result[:success]
@@ -185,13 +185,13 @@ module Admin
       app = @gotify.get_application(params[:app_id])
 
       unless app
-        flash[:error] = 'Application not found'
+        flash[:error] = "Application not found"
         redirect_to admin_gotify_messages_path
         return
       end
 
       result = @gotify.send_message(
-        app_token: app['token'],
+        app_token: app["token"],
         title: params[:title],
         message: params[:message],
         priority: params[:priority]&.to_i || 5

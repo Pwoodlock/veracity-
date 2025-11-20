@@ -1,0 +1,13 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "Command Injection",
+      "warning_code": 14,
+      "message": "Possible command injection",
+      "confidence": "Medium",
+      "note": "Intentional command execution for server management functionality"
+    }
+  ],
+  "updated": "2025-11-20",
+  "brakeman_version": "7.1.0"
+}
