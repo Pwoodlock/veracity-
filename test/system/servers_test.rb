@@ -25,8 +25,8 @@ class ServersTest < ApplicationSystemTestCase
   test "servers show online/offline status" do
     visit servers_path
 
-    # Should indicate server status visually
-    assert_text "online"
+    # Should indicate server status visually (case-insensitive)
+    assert_text(/online/i)
   end
 
   test "server details page loads" do
@@ -48,7 +48,7 @@ class ServersTest < ApplicationSystemTestCase
 
     # If there's a filter/search, test it
     if page.has_select?("status")
-      select "online", from: "status"
+      select "Online", from: "status"
       wait_for_page_load
       assert_text servers(:online_server).hostname
     end
@@ -69,7 +69,8 @@ class ServersTest < ApplicationSystemTestCase
 
     # Each server card should show essential info
     assert_text @server.hostname
-    assert_text @server.status
+    # Status is displayed in uppercase
+    assert_text(/#{@server.status}/i)
   end
 
   test "clicking server navigates to details" do
