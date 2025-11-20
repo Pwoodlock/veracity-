@@ -47,7 +47,7 @@ SyslogIdentifier=veracity-puma
 
 # Security
 PrivateTmp=true
-NoNewPrivileges=true
+# Note: NoNewPrivileges must be false to allow Salt commands via sudo
 
 [Install]
 WantedBy=multi-user.target
@@ -80,7 +80,7 @@ SyslogIdentifier=veracity-sidekiq
 
 # Security
 PrivateTmp=true
-NoNewPrivileges=true
+# Note: NoNewPrivileges must be false to allow Salt commands via sudo
 
 [Install]
 WantedBy=multi-user.target
