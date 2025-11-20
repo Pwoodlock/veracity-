@@ -1,0 +1,25 @@
+# Test users for authentication and authorization tests
+
+admin:
+  email: admin@test.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, 'password123!') %>
+  admin: true
+  confirmed_at: <%= Time.current %>
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+regular_user:
+  email: user@test.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, 'password123!') %>
+  admin: false
+  confirmed_at: <%= Time.current %>
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>
+
+unconfirmed_user:
+  email: unconfirmed@test.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, 'password123!') %>
+  admin: false
+  confirmed_at:
+  created_at: <%= Time.current %>
+  updated_at: <%= Time.current %>

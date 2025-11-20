@@ -9,7 +9,10 @@ class Server < ApplicationRecord
   has_many :cve_watchlists, foreign_key: :server_id, dependent: :destroy
 
   # Callbacks
+  after_create_commit :broadcast_dashboard_update
+  after_update_commit :broadcast_dashboard_update, if: :saved_change_to_status?
   after_update_commit :enqueue_status_change_notification, if: :saved_change_to_status?
+  after_destroy_commit :broadcast_dashboard_update
 
   # Validations
   validates :hostname, presence: true
@@ -164,6 +167,40 @@ class Server < ApplicationRecord
   end
 
   private
+
+  # Broadcast dashboard update via Turbo Streams when server is created, updated, or destroyed
+  # This ensures the dashboard stats reflect the current server count and status in real-time
+  def broadcast_dashboard_update
+    Rails.logger.info "Server#broadcast_dashboard_update: Broadcasting for #{hostname} (#{minion_id})"
+
+    stats_data = {
+      total_servers: Server.count,
+      online_servers: Server.where(status: 'online').count,
+      offline_servers: Server.where(status: 'offline').count,
+      total_groups: Group.count,
+      ungrouped_servers: Server.where(group_id: nil).count,
+      commands_today: Command.where('started_at > ?', 24.hours.ago).count,
+      successful_commands: Command.where('started_at > ?', 24.hours.ago)
+                                  .where(status: 'completed')
+                                  .where('exit_code = 0 OR exit_code IS NULL')
+                                  .count,
+      failed_commands: Command.where('started_at > ?', 24.hours.ago)
+                              .where(status: 'failed')
+                              .count
+    }
+
+    Turbo::StreamsChannel.broadcast_replace_to(
+      "dashboard",
+      target: "dashboard-stats",
+      partial: "dashboard/stats",
+      locals: stats_data
+    )
+
+    Rails.logger.info "Server#broadcast_dashboard_update: Broadcast completed successfully"
+  rescue StandardError => e
+    Rails.logger.error "Server#broadcast_dashboard_update: Failed - #{e.message}"
+    Rails.logger.error e.backtrace.first(5).join("\n")
+  end
 
   # Enqueue background job to send Gotify notification when server status changes
   # This method is called after the transaction commits, ensuring the database changes
