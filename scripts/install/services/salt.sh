@@ -69,6 +69,24 @@ install_salt() {
 
   success "Salt packages installed via official bootstrap"
 
+  # Install python-pam for Salt's bundled Python (required for PAM authentication)
+  step "Installing python-pam for Salt's Python..."
+  if [ -x /opt/saltstack/salt/bin/pip3 ]; then
+    /opt/saltstack/salt/bin/pip3 install python-pam 2>> "${LOG_FILE}" || warning "Failed to install python-pam for Salt Python"
+  fi
+
+  # Also install for system Python (Salt may spawn subprocesses using system Python)
+  info "Installing python-pam for system Python..."
+  pip3 install --break-system-packages python-pam 2>> "${LOG_FILE}" || warning "Failed to install python-pam for system Python"
+
+  # Add salt user to shadow group (required for PAM to read /etc/shadow)
+  if getent group shadow &>/dev/null; then
+    usermod -aG shadow salt 2>/dev/null || warning "Failed to add salt user to shadow group"
+    info "Added salt user to shadow group for PAM authentication"
+  fi
+
+  success "python-pam installed"
+
   # Verify installation and create symlinks if needed (onedir installation)
   if ! command -v salt-master >/dev/null 2>&1; then
     # Check onedir location
@@ -157,8 +175,19 @@ PYEOF
   success "Password set for user: ${username}"
 
   # Configure PAM authentication for salt-api
-  if [ ! -f /etc/pam.d/salt-api ]; then
-    info "Configuring PAM authentication for salt-api..."
+  info "Configuring PAM authentication for salt-api..."
+
+  # Detect OS and use appropriate PAM includes
+  # Ubuntu/Debian use common-auth, RHEL/Rocky use system-auth
+  if [ -f /etc/pam.d/common-auth ]; then
+    # Debian/Ubuntu style
+    cat > /etc/pam.d/salt-api << 'PAMEOF'
+auth       include      common-auth
+account    include      common-account
+PAMEOF
+    success "PAM configuration created for salt-api (Debian/Ubuntu style)"
+  else
+    # RHEL/CentOS/Rocky style
     cat > /etc/pam.d/salt-api << 'PAMEOF'
 auth       include      system-auth
 account    required     pam_nologin.so
@@ -166,7 +195,7 @@ account    include      system-auth
 password   include      system-auth
 session    include      system-auth
 PAMEOF
-    success "PAM configuration created for salt-api"
+    success "PAM configuration created for salt-api (RHEL style)"
   fi
 
   success "Salt API user configured"
