@@ -529,6 +529,19 @@ update_system_packages() {
   esac
 
   success "System packages updated"
+
+  # Install essential base packages needed by installer
+  step "Installing base packages..."
+  case "${pkg_mgr}" in
+    apt-get)
+      spinner "Installing base tools" execute apt-get install -y -qq curl wget git unzip gnupg ca-certificates
+      ;;
+    dnf)
+      spinner "Installing base tools" execute dnf install -y -q curl wget git unzip gnupg2 ca-certificates
+      ;;
+  esac
+
+  success "Base packages installed"
 }
 
 #######################################
