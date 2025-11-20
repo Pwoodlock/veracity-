@@ -270,11 +270,11 @@ module Admin
 
     def settings
       # Get settings with source tracking (ENV vs DB)
-      @gotify_url = SystemSetting.get_with_source('gotify_admin_url', 'http://localhost:8080')
-      @gotify_username = SystemSetting.get_with_source('gotify_admin_username', 'admin')
-      @gotify_password = SystemSetting.get_with_source('gotify_admin_password', 'admin')
-      @gotify_enabled = SystemSetting.get_with_source('gotify_enabled', false)
-      @gotify_ssl_verify = SystemSetting.get_with_source('gotify_ssl_verify', true)
+      @gotify_url = SystemSetting.get_with_source("gotify_admin_url", "http://localhost:8080")
+      @gotify_username = SystemSetting.get_with_source("gotify_admin_username", "admin")
+      @gotify_password = SystemSetting.get_with_source("gotify_admin_password", "admin")
+      @gotify_enabled = SystemSetting.get_with_source("gotify_enabled", false)
+      @gotify_ssl_verify = SystemSetting.get_with_source("gotify_ssl_verify", true)
 
       # Test current connection
       @connection_test = test_connection_internal

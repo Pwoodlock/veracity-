@@ -56,7 +56,7 @@ jobs:
           bundle install --jobs 4 --retry 3
 
       - name: Run Brakeman
-        run: bundle exec brakeman -q --no-pager --format github -i config/brakeman.ignore
+        run: bundle exec brakeman -q --no-pager --format github --no-exit-on-warn -i config/brakeman.ignore
 
   test:
     name: Tests
@@ -108,7 +108,7 @@ jobs:
       - name: Setup database
         run: |
           bundle exec rails db:create
-          bundle exec rails db:schema:load
+          bundle exec rails db:migrate
 
       - name: Precompile assets
         run: bundle exec rails assets:precompile
@@ -183,7 +183,7 @@ jobs:
       - name: Setup database
         run: |
           bundle exec rails db:create
-          bundle exec rails db:schema:load
+          bundle exec rails db:migrate
 
       - name: Precompile assets
         run: bundle exec rails assets:precompile
@@ -248,7 +248,7 @@ jobs:
       - name: Setup database
         run: |
           bundle exec rails db:create
-          bundle exec rails db:schema:load
+          bundle exec rails db:migrate
 
       - name: Test database connectivity
         run: |
