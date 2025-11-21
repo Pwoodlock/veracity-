@@ -76,7 +76,7 @@ class SystemSetting < ApplicationRecord
   end
 
   def self.tagline
-    get('tagline', 'Universal server management with SaltStack')
+    get('tagline', 'Infrastructure Management Platform with Batteries Included')
   end
 
   private
