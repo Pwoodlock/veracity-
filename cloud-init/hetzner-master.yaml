@@ -1,0 +1,141 @@
+#cloud-config
+# Veracity Master Server - Hetzner Cloud Init
+#
+# Usage: Paste this into Hetzner Cloud Console -> Cloud config (YAML)
+# Remember to set your root password below!
+
+# Set hostname
+hostname: veracity-stag
+manage_etc_hosts: true
+fqdn: veracity-stag.devsec.ie
+
+# Set root password - CHANGE THIS!
+chpasswd:
+  expire: false
+  users:
+    - name: root
+      password: CHANGE_ME_TO_YOUR_PASSWORD
+      type: text
+
+# Enable SSH root login with password
+ssh_pwauth: true
+
+# Disable SSH key requirement
+ssh_deletekeys: false
+
+# Configure SSH for password auth
+write_files:
+  # SSH config to allow root password login
+  - path: /etc/ssh/sshd_config.d/99-allow-root.conf
+    content: |
+      PermitRootLogin yes
+      PasswordAuthentication yes
+    permissions: '0644'
+
+  # Cloud-init completion marker
+  - path: /root/cloud-init-complete.txt
+    content: |
+      Cloud-init completed successfully
+      Server: Veracity Master
+      Domain: veracity-stag.devsec.ie
+    permissions: '0644'
+
+# Package management
+package_update: true
+package_upgrade: true
+
+# Install prerequisite packages
+packages:
+  # Build essentials
+  - build-essential
+  - curl
+  - wget
+  - git
+  - vim
+  - htop
+  - tmux
+  - jq
+  - unzip
+  - ncdu
+  - tree
+  - gnupg
+  - apt-transport-https
+  - ca-certificates
+  - software-properties-common
+
+  # Networking tools
+  - net-tools
+  - dnsutils
+  - iputils-ping
+  - traceroute
+  - mtr-tiny
+
+  # System monitoring
+  - sysstat
+  - iotop
+  - lsof
+
+  # Required for Ruby/Rails
+  - libssl-dev
+  - libreadline-dev
+  - zlib1g-dev
+  - libyaml-dev
+  - libffi-dev
+  - libgdbm-dev
+  - libncurses5-dev
+  - libpq-dev
+  - libjemalloc2
+
+  # Required for image processing
+  - libvips
+  - libvips-dev
+  - imagemagick
+
+  # Python (for Salt and integrations)
+  - python3
+  - python3-pip
+  - python3-venv
+  - python3-dev
+
+# Run commands after packages are installed
+runcmd:
+  # Restart SSH to apply config
+  - systemctl restart sshd
+
+  # Set timezone
+  - timedatectl set-timezone UTC
+
+  # Clone Veracity repository
+  - git clone https://github.com/Pwoodlock/veracity-.git /opt/veracity-
+
+  # Make install script executable
+  - chmod +x /opt/veracity-/install.sh
+
+  # Update cloud-init marker with completion info
+  - echo "" >> /root/cloud-init-complete.txt
+  - echo "Timestamp: $(date -Iseconds)" >> /root/cloud-init-complete.txt
+  - echo "Veracity cloned to: /opt/veracity-" >> /root/cloud-init-complete.txt
+  - echo "" >> /root/cloud-init-complete.txt
+  - echo "Next step: cd /opt/veracity- && ./install.sh" >> /root/cloud-init-complete.txt
+
+# Final message
+final_message: |
+  ========================================
+  Veracity Master Server - Cloud Init Complete
+  ========================================
+
+  Server is ready for Veracity installation!
+
+  Next steps:
+  1. SSH to server: ssh root@<IP>
+  2. Run installer: cd /opt/veracity- && ./install.sh
+
+  The installer will guide you through:
+  - Domain configuration (veracity-stag.devsec.ie)
+  - HTTPS/SSL setup
+  - Admin credentials
+  - Database configuration
+  - All service installation
+
+  System uptime: $UPTIME
+  ========================================

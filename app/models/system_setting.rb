@@ -72,7 +72,7 @@ class SystemSetting < ApplicationRecord
   end
 
   def self.company_name
-    get('company_name', 'Sodium')
+    get('company_name', 'Veracity')
   end
 
   def self.tagline

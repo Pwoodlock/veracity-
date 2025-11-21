@@ -1,5 +1,5 @@
 <% content_for :head do %>
-  <title>Appearance Settings - Sodium</title>
+  <title>Appearance Settings - Veracity</title>
 <% end %>
 
 <%= render layout: 'shared/sidebar' do %>
@@ -9,7 +9,7 @@
     <!-- Header -->
     <div class="mb-6">
       <h1 class="text-3xl font-bold text-base-content">Appearance Settings</h1>
-      <p class="mt-2 text-sm text-base-content/60">Customize the look and feel of Sodium</p>
+      <p class="mt-2 text-sm text-base-content/60">Customize the look and feel of Veracity</p>
     </div>
 
     <!-- Flash Messages -->
@@ -36,7 +36,7 @@
           </label>
           <div class="flex gap-4">
             <%= text_field_tag :company_name, @company_name,
-                placeholder: "Sodium",
+                placeholder: "Veracity",
                 class: "input input-bordered flex-1" %>
             <%= f.submit "Update", class: "btn btn-primary cursor-pointer" %>
           </div>
