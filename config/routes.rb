@@ -110,6 +110,8 @@ Rails.application.routes.draw do
     get 'maintenance', to: 'maintenance#index', as: :maintenance
     delete 'maintenance/clear_failed_commands', to: 'maintenance#clear_failed_commands', as: :clear_failed_commands_maintenance
     delete 'maintenance/clear_old_commands', to: 'maintenance#clear_old_commands', as: :clear_old_commands_maintenance
+    delete 'maintenance/clear_failed_task_runs', to: 'maintenance#clear_failed_task_runs', as: :clear_failed_task_runs_maintenance
+    delete 'maintenance/clear_old_task_runs', to: 'maintenance#clear_old_task_runs', as: :clear_old_task_runs_maintenance
   end
 
   # Tasks System
