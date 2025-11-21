@@ -250,7 +250,7 @@ class TaskExecutionJob < ApplicationJob
         stdout, stderr, status = Open3.capture3(salt_cmd)
 
         # Parse raw JSON data regardless of exit status
-        # Salt returns exit code 1 if any minion doesn't respond, but we still get partial results
+        # Salt returns exit code 1 for many reasons: minion offline, command failed, etc.
         raw_data = begin
           JSON.parse(stdout)
         rescue JSON::ParserError
@@ -264,27 +264,43 @@ class TaskExecutionJob < ApplicationJob
             raw_data: raw_data
           }
         elsif raw_data && raw_data.any?
-          # Partial success - some minions responded, some didn't
-          # Check for actual responses vs timeouts
-          responding = raw_data.select { |_, v| !v.nil? && v != false }
-          not_responding = raw_data.select { |_, v| v.nil? || v == false }
+          # We have results despite non-zero exit code
+          # Categorize responses: actual data, errors, or non-responding
+          results = categorize_salt_responses(raw_data)
 
-          if responding.any?
-            # We have some successful results - report partial success
+          if results[:with_data].any?
+            # We have actual results from at least one minion
             output = parse_salt_output(stdout, command)
 
-            if not_responding.any?
-              # Add warning about non-responding minions
-              warning = "\n\n⚠️ Warning: #{not_responding.keys.size} minion(s) did not respond:\n"
-              warning += not_responding.keys.map { |m| "  • #{m}" }.join("\n")
-              output += warning
+            # Add warnings for problematic minions
+            warnings = []
+
+            if results[:not_responding].any?
+              warnings << "⚠️ #{results[:not_responding].size} minion(s) did not respond:"
+              warnings += results[:not_responding].map { |m| "  • #{m}" }
             end
+
+            if results[:with_errors].any?
+              warnings << "⚠️ #{results[:with_errors].size} minion(s) returned errors:"
+              results[:with_errors].each do |minion, error|
+                warnings << "  • #{minion}: #{error.to_s.truncate(100)}"
+              end
+            end
+
+            output += "\n\n" + warnings.join("\n") if warnings.any?
 
             {
               success: true,
               output: output,
               raw_data: raw_data,
-              partial: not_responding.any?
+              partial: results[:not_responding].any? || results[:with_errors].any?
+            }
+          elsif results[:with_errors].any?
+            # All minions returned errors
+            error_details = results[:with_errors].map { |m, e| "#{m}: #{e.to_s.truncate(100)}" }.join("\n")
+            {
+              success: false,
+              error: "All minions returned errors:\n#{error_details}"
             }
           else
             # No minions responded at all
@@ -294,9 +310,15 @@ class TaskExecutionJob < ApplicationJob
             }
           end
         else
+          # No parseable results - check if stderr has useful info
+          error_msg = stderr.presence || stdout.presence || "Unknown error"
+          # Strip common Salt wrapper messages to get to the real error
+          error_msg = error_msg.gsub(/ERROR: Minions returned with non-zero exit code\n?/, '').strip
+          error_msg = "Command failed with no output" if error_msg.empty?
+
           {
             success: false,
-            error: "Command failed: #{stderr.presence || stdout}"
+            error: "Command failed: #{error_msg}"
           }
         end
       end
@@ -311,6 +333,48 @@ class TaskExecutionJob < ApplicationJob
       success: false,
       error: "Execution error: #{e.message}"
     }
+  end
+
+  # Categorize Salt responses into: with_data, with_errors, not_responding
+  def categorize_salt_responses(raw_data)
+    with_data = {}
+    with_errors = {}
+    not_responding = []
+
+    raw_data.each do |minion, response|
+      if response.nil? || response == false
+        # Minion didn't respond
+        not_responding << minion
+      elsif response.is_a?(String) && is_salt_error_string?(response)
+        # Salt returned an error string
+        with_errors[minion] = response
+      elsif response.is_a?(Hash) && response.key?('retcode') && response['retcode'] != 0
+        # Command returned non-zero exit code
+        error_msg = response['stderr'] || response['stdout'] || response['comment'] || 'Non-zero exit code'
+        with_errors[minion] = error_msg
+      else
+        # Actual data (including empty hashes which mean "no changes needed")
+        with_data[minion] = response
+      end
+    end
+
+    { with_data: with_data, with_errors: with_errors, not_responding: not_responding }
+  end
+
+  # Check if a string response is a Salt error message
+  def is_salt_error_string?(str)
+    error_patterns = [
+      /Minion did not return/i,
+      /No response/i,
+      /Timed out/i,
+      /not connected/i,
+      /Unable to connect/i,
+      /Authentication error/i,
+      /Minion .* is not responding/i,
+      /Salt request timed out/i
+    ]
+
+    error_patterns.any? { |pattern| str.match?(pattern) }
   end
 
   def build_salt_command(command, target)
