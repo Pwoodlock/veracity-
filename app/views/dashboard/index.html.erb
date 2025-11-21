@@ -10,11 +10,9 @@
   <script src="https://cdn.jsdelivr.net/npm/chartkick@5.0.1/dist/chartkick.min.js" defer></script>
 <% end %>
 
+<%= render layout: 'shared/sidebar' do %>
 <!-- Toast Notification Container -->
 <div id="toast-container" class="toast toast-top toast-end"></div>
-
-<!-- Shared Navigation -->
-<%= render 'shared/navigation' %>
 
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
@@ -257,3 +255,4 @@
       console.log('Dashboard enhancements loaded');
     })();
   </script>
+<% end %>

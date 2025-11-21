@@ -2,7 +2,7 @@
   <title>Proxmox API Keys - Server Manager</title>
 <% end %>
 
-<%= render 'shared/navigation' %>
+<%= render layout: 'shared/sidebar' do %>
 
 <%= render partial: 'shared/navigation' %>
 
@@ -297,3 +297,4 @@
       });
     }
   </script>
+<% end %>

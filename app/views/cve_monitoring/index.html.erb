@@ -2,8 +2,7 @@
   <title>CVE Monitoring - Server Manager</title>
 <% end %>
 
-<!-- Shared Navigation -->
-<%= render 'shared/navigation' %>
+<%= render layout: 'shared/sidebar' do %>
 
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Page Header -->
@@ -209,3 +208,4 @@
       </div>
     <% end %>
   </div>
+<% end %>
