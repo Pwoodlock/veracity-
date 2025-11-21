@@ -385,11 +385,12 @@ class TaskExecutionJob < ApplicationJob
       module_function = parts[0]
       args = parts[1] || ''
 
-      "sudo salt -L '#{target}' #{module_function} #{args} --output=json"
+      # --static combines all minion results into a single JSON object
+      "sudo salt -L '#{target}' #{module_function} #{args} --output=json --static"
     else
       # It's a shell command to run via cmd.run
       escaped_cmd = command.gsub("'", "'\\''")
-      "sudo salt -L '#{target}' cmd.run '#{escaped_cmd}' --output=json"
+      "sudo salt -L '#{target}' cmd.run '#{escaped_cmd}' --output=json --static"
     end
   end
 
