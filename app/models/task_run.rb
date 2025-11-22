@@ -13,6 +13,7 @@ class TaskRun < ApplicationRecord
   scope :finished, -> { where(status: %w[completed failed cancelled]) }
 
   before_save :calculate_duration
+  after_update_commit :broadcast_update, if: :saved_change_to_status?
 
   def pending?
     status == 'pending'
@@ -100,5 +101,14 @@ class TaskRun < ApplicationRecord
     if started_at && completed_at
       self.duration_seconds = (completed_at - started_at).to_i
     end
+  end
+
+  def broadcast_update
+    broadcast_replace_to(
+      "task_run_#{id}",
+      target: "task_run_content",
+      partial: "task_runs/task_run_content",
+      locals: { task_run: self }
+    )
   end
 end
