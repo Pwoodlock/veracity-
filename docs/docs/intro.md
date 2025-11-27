@@ -91,6 +91,5 @@ Once installation completes:
 
 ## Need Help?
 
-- [Installation Guide](./installation/installation)
 - [GitHub Issues](https://github.com/Pwoodlock/veracity-/issues)
 - [GitHub Discussions](https://github.com/Pwoodlock/veracity-/discussions)
