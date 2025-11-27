@@ -36,17 +36,19 @@ sudo ./scripts/install/diagnose.sh
 ## System Requirements
 
 ### Minimum Requirements
-- **OS**: Ubuntu 22.04/24.04, Debian 11/12, or Almalinux 9
+- **OS**: Ubuntu 20.04/22.04/24.04, Debian 11/12
 - **CPU**: 2 cores
 - **RAM**: 2GB minimum (4GB recommended)
-- **Disk**: 10GB free space
+- **Disk**: 20GB free space
 - **Network**: Internet connectivity for package downloads
 
 ### Recommended for Production
 - **CPU**: 4+ cores
 - **RAM**: 4GB+ (8GB for larger deployments)
-- **Disk**: 20GB+ SSD storage
+- **Disk**: 50GB+ SSD storage
 - **Network**: Static IP or domain with DNS configured
+
+> **Note:** RHEL-based distributions (Rocky Linux, AlmaLinux) support is planned.
 
 ## What Gets Installed
 
@@ -55,10 +57,10 @@ The installer sets up a complete, Veracity infrastructure management system:
 ### Core Services
 - **PostgreSQL 14+** - Primary database
 - **Redis 7+** - Caching and job queues
-- **SaltStack Master & API** - Minion management and automation
-- **Ruby 3.3.5** (via rbenv) - Application runtime
-- **Node.js 18 LTS** - Asset compilation
-- **Caddy v2** - Reverse proxy with automatic HTTPS
+- **SaltStack 3007** - Minion management and automation
+- **Ruby 3.3.6** (via Mise) - Application runtime
+- **Node.js 24 LTS** - Asset compilation
+- **Caddy** - Reverse proxy with automatic HTTPS
 
 ### Application Components
 - **Puma** - Rails application server
@@ -67,11 +69,10 @@ The installer sets up a complete, Veracity infrastructure management system:
 - **UFW Firewall** - Security rules
 
 ### Integrated Features (All Installed)
-- **Gotify** - Push notifications (Docker-based)
-- **CVE Monitoring** - Automatic vulnerability scanning (Python venv)
+- **Gotify** - Push notifications (binary)
+- **CVE Monitoring** - Automatic vulnerability scanning (Python)
 - **Proxmox API** - Virtual machine management
 - **Hetzner Cloud API** - Cloud server management
-- **OAuth2/Zitadel** - Roadmap
 
 ## Installation Process
 
@@ -110,11 +111,11 @@ The installer performs these steps automatically:
 2. ✓ Install PostgreSQL and create database
 3. ✓ Install and configure Redis
 4. ✓ Install Salt Master and Salt API
-5. ✓ Install Ruby 3.3.5 via rbenv
-6. ✓ Install Node.js 18 and Yarn
+5. ✓ Install Ruby 3.3.6 via Mise
+6. ✓ Install Node.js 24 LTS
 7. ✓ Install Caddy and configure automatic HTTPS
-8. ✓ Install Gotify push notification server (Docker)
-9. ✓ Install CVE monitoring with Python venv
+8. ✓ Install Gotify push notification server (binary)
+9. ✓ Install Python integrations (CVE, Hetzner, Proxmox)
 10. ✓ Clone application and install dependencies
 11. ✓ Run database migrations and seed data
 12. ✓ Precompile assets
@@ -123,7 +124,7 @@ The installer performs these steps automatically:
 15. ✓ Configure firewall
 16. ✓ Run health checks
 
-**Estimated time: 25-35 minutes** (depends on internet speed and server specs)
+**Estimated time: 15-20 minutes** (depends on internet speed and server specs)
 
 ### 4. Post-Installation
 
@@ -155,7 +156,7 @@ After installation completes:
 └── bin/cve_python                # Python wrapper script
 
 /home/deploy/                     # Deploy user home
-└── .rbenv/                       # Ruby installation
+└── .local/share/mise/            # Ruby installation (via Mise)
 
 /var/log/                         # System logs
 ├── veracity-install.log          # Installation log
@@ -169,7 +170,7 @@ After installation completes:
 
 /root/veracity-install-credentials.txt  # Saved credentials
 
-/var/lib/gotify/                  # Gotify data directory
+/opt/gotify/                      # Gotify installation
 
 /etc/systemd/system/
 ├── server-manager.service        # Puma service
@@ -191,8 +192,7 @@ systemctl status postgresql
 systemctl status redis
 systemctl status salt-master
 systemctl status salt-api
-systemctl status docker
-docker ps  # View running containers (Gotify)
+systemctl status gotify
 ```
 
 ### Restart Services

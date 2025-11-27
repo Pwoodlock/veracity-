@@ -2,90 +2,95 @@
 sidebar_position: 1
 ---
 
-# Getting Started with Veracity
+# Getting Started
 
-Welcome to **Veracity** - A modern server management platform built with Ruby on Rails and SaltStack.
+Welcome to **Veracity** - a modern server management platform built with Ruby on Rails and SaltStack.
 
-> ⚠️ **ALPHA SOFTWARE** - Version 0.0.1-a is in early development. Features and APIs may change.
+:::caution Alpha Software
+Version 0.0.1-alpha is in early development. Features and APIs may change.
+:::
+
+## What is Veracity?
+
+Veracity is a web-based infrastructure management platform that provides:
+
+- **Centralized Server Management** - Monitor and manage multiple servers from a single dashboard
+- **Task Automation** - Execute Salt commands with 36+ pre-built templates
+- **Real-time Updates** - WebSocket-based live feedback on task execution
+- **Security Monitoring** - CVE vulnerability scanning
+- **Cloud Integration** - Hetzner Cloud and Proxmox VE API support
+- **Push Notifications** - Gotify integration for alerts
 
 ## Quick Start
 
-Veracity provides a one-line installation script that handles all dependencies and configuration automatically.
-
 ### Prerequisites
 
-Before installing Veracity, ensure your system meets these requirements:
+Before installing, ensure your system meets these requirements:
 
-- **Operating System**: Ubuntu 20.04/22.04/24.04 LTS or Debian 11/12
-- **CPU**: 2 cores minimum
-- **RAM**: 2GB minimum (4GB recommended)
-- **Disk**: 20GB free space
-- **Network**: Static IP address or FQDN
-- **Access**: Root or sudo privileges
+| Requirement | Specification |
+|-------------|---------------|
+| **OS** | Ubuntu 20.04/22.04/24.04 or Debian 11/12 |
+| **CPU** | 2 cores minimum |
+| **RAM** | 2 GB minimum (4 GB recommended) |
+| **Disk** | 20 GB free space |
+| **Network** | Static IP or FQDN |
+| **Access** | Root or sudo privileges |
 
-### One-Line Installation
+### Installation
+
+**One-line install:**
 
 ```bash
 curl -sSL https://raw.githubusercontent.com/Pwoodlock/veracity-/main/install.sh | sudo bash
 ```
 
-The installer will:
-1. Detect your operating system
-2. Collect configuration (domain, admin credentials, etc.)
-3. Install all required dependencies
-4. Configure services (PostgreSQL, Redis, SaltStack, Caddy)
-5. Deploy the Veracity application
-6. Set up systemd services and firewall
-
-**Installation time**: Approximately 10-15 minutes
-
-### Manual Installation
-
-For more control over the installation process:
+**Or clone and run:**
 
 ```bash
-# Clone the repository
 git clone https://github.com/Pwoodlock/veracity-.git
 cd veracity-
-
-# Run the installer
 sudo ./install.sh
 ```
+
+The interactive installer will:
+
+1. Detect your operating system
+2. Prompt for configuration (domain, admin credentials)
+3. Install all dependencies
+4. Configure services (PostgreSQL, Redis, SaltStack, Caddy)
+5. Deploy the application
+6. Set up systemd services and firewall
+
+**Installation time:** ~15-20 minutes
 
 ### What Gets Installed
 
 | Component | Version | Purpose |
 |-----------|---------|---------|
-| Ruby | 3.3.6 | Application runtime (via Mise version manager) |
-| Rails | 8.1.1 | Web framework |
+| Ruby | 3.3.6 | Application runtime (via Mise) |
+| Rails | 8.0 | Web framework |
 | Node.js | 24 LTS | Asset compilation |
 | PostgreSQL | 14+ | Database |
 | Redis | 7+ | Cache & job queue |
-| SaltStack | 3007.8 | Infrastructure automation |
-| Python | 3.8+ | Salt integrations |
+| SaltStack | 3007 | Infrastructure automation |
 | Caddy | Latest | Web server with auto-HTTPS |
-| Gotify | Latest | Push notifications (binary) |
+| Gotify | Latest | Push notifications |
 
-### After Installation
+## After Installation
 
-Once installation completes, you'll receive:
+Once installation completes:
 
-1. **Web Interface URL**: `https://your-domain.com` or `http://your-ip`
-2. **Admin Credentials**: Saved in `/tmp/veracity-install-credentials-*.txt`
-3. **Service Status**: All services running and enabled
-
-### Next Steps
-
-After installation:
-
-1. Access the web interface with your admin credentials
-2. Enable two-factor authentication (2FA) for security
-3. Configure your organization settings in Admin → Settings
-4. Install Salt minions on servers you want to manage
-5. Start managing your infrastructure!
+1. **Access the dashboard** at `https://your-domain.com`
+2. **Login** with credentials from `/tmp/veracity-install-credentials-*.txt`
+3. **Enable 2FA** in Settings → Security
+4. **Install Salt minions** on servers you want to manage:
+   ```bash
+   curl -sSL https://your-domain.com/install-minion.sh | sudo bash
+   ```
+5. **Accept minion keys** in the Onboarding page
 
 ## Need Help?
 
-- **Documentation**: https://pwoodlock.github.io/veracity-/
-- **Issues**: https://github.com/Pwoodlock/veracity-/issues
-- **Discussions**: https://github.com/Pwoodlock/veracity-/discussions
+- [Installation Guide](/docs/installation/installation)
+- [GitHub Issues](https://github.com/Pwoodlock/veracity-/issues)
+- [GitHub Discussions](https://github.com/Pwoodlock/veracity-/discussions)
