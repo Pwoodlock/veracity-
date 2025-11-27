@@ -87,6 +87,7 @@ The installer performs these steps:
 |-----------|---------|---------|
 | Ruby | 3.3.6 | Application runtime (via Mise) |
 | Rails | 8.0 | Web framework |
+| DaisyUI | 5.x | UI components (Tailwind CSS) |
 | Node.js | 24 LTS | Asset compilation |
 | PostgreSQL | 14+ | Database |
 | Redis | 7+ | Cache & job queue |

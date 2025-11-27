@@ -54,7 +54,7 @@ The interactive installer handles everything: dependencies, database, services, 
 | **Security Scanning** | CVE vulnerability monitoring |
 | **Push Notifications** | Gotify integration for alerts |
 | **Cloud APIs** | Hetzner Cloud & Proxmox VE integration |
-| **Modern UI** | DaisyUI-based responsive dashboard |
+| **Modern UI** | DaisyUI + Tailwind CSS responsive dashboard |
 
 ---
 
@@ -83,6 +83,7 @@ The interactive installer handles everything: dependencies, database, services, 
 |-----------|---------|-------|
 | Ruby | 3.3.6 | Via Mise version manager |
 | Rails | 8.0 | Web framework |
+| DaisyUI | 5.x | UI component library (Tailwind CSS) |
 | Node.js | 24 LTS | Asset compilation |
 | PostgreSQL | 14+ | Database |
 | Redis | 7+ | Cache & job queue |
