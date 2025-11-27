@@ -1,13 +1,13 @@
 # Veracity Infrastructure Handoff Report
-**Date:** 2025-11-20
+**Date:** 2025-11-22 (Updated)
 **Server:** 65.21.157.19 (Hetzner)
 **Domain:** veracity-stag.devsec.ie
 
 ---
 
-## Current State: OPERATIONAL
+## Current State: OPERATIONAL + ENHANCED
 
-All services running. Installation complete. Ready for testing.
+All services running. Latest features deployed. Production ready.
 
 ---
 
@@ -180,15 +180,23 @@ cd /opt/veracity- && ./install.sh --resume
 
 ---
 
-## Git Commits (Main Branch)
+## Recent Updates (Nov 22, 2025)
 
-Recent relevant commits:
-- `ce4e1b1` - fix(installer): improve Gotify binary detection
-- `c8c5d61` - Handle partial Salt command success gracefully
-- `fa55ab3` - Add passwordless sudo for Salt commands
-- `9ebb881` - Remove NoNewPrivileges to allow Salt commands
-- `56ab549` - Enable netapi_enable_clients for Salt 3007+
-- `b657922` - Fix PAM authentication for Salt API
+### New Features Added
+1. **Left Sidebar Navigation** - Modern left-side navigation replacing top navbar
+2. **Real-time Task Updates** - WebSocket-based live updates (no refresh needed)
+3. **36 Pre-built Task Templates** - Ready-to-use Salt commands for monitoring, security, maintenance
+4. **Branding Updates** - Changed from "Sodium" to "Veracity" throughout
+5. **Maintenance Page** - Now includes TaskRun cleanup options
+
+### Latest Commits
+- `3a8ad8d` - Add 24 pre-built task templates with Salt commands
+- `45b232c` - Add Turbo and ActionCable for real-time updates
+- `974f847` - Implement WebSocket streaming for task results
+- `c1fe2ea` - Add task run cleanup to maintenance page
+- `fea3004` - Add --static flag for valid multi-minion JSON
+- `e407437` - Update default tagline
+- `9778604` - Rename Sodium to Veracity
 
 All passed CI.
 
