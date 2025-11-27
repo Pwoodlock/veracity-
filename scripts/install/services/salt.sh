@@ -139,40 +139,64 @@ create_salt_api_user() {
     info "User ${username} already exists"
   fi
 
-  # Set password for PAM authentication - using multiple methods for reliability
+  # Set password for PAM authentication
   info "Setting password for Salt API user..."
 
-  # Method 1: chpasswd (standard)
-  echo "${username}:${password}" | chpasswd 2>> "${LOG_FILE}" || warning "chpasswd method failed"
-
-  # Method 2: passwd --stdin (backup)
-  echo "${password}" | passwd --stdin "${username}" &>> "${LOG_FILE}" || warning "passwd --stdin method failed"
-
-  # Verify password was set by attempting PAM authentication
-  info "Verifying password authentication..."
-  if command -v pamtester &>/dev/null; then
-    if pamtester -v login "${username}" authenticate <<< "${password}" &>> "${LOG_FILE}"; then
-      success "Password authentication verified with pamtester"
-    else
-      warning "Password verification with pamtester failed"
-    fi
+  # Use chpasswd - the standard and reliable method
+  if echo "${username}:${password}" | chpasswd 2>> "${LOG_FILE}"; then
+    success "Password set via chpasswd"
   else
-    # Alternative: test with Python PAM module if available
-    if command -v python3 &>/dev/null; then
-      python3 << PYEOF &>> "${LOG_FILE}" || warning "Python PAM verification failed"
-import pam
-p = pam.pam()
-if p.authenticate('${username}', '${password}', service='login'):
-    print("Password verified successfully")
-    exit(0)
-else:
-    print("Password verification failed")
-    exit(1)
-PYEOF
+    # Fallback: try passwd --stdin (works on some RHEL systems)
+    if echo "${password}" | passwd --stdin "${username}" &>> "${LOG_FILE}"; then
+      success "Password set via passwd --stdin"
+    else
+      error "Failed to set password for ${username}"
+      fatal "Cannot continue without Salt API user password"
     fi
   fi
 
-  success "Password set for user: ${username}"
+  # Verify password was set by checking shadow file has a password hash
+  info "Verifying password was set..."
+  local shadow_entry
+  shadow_entry=$(grep "^${username}:" /etc/shadow 2>/dev/null || true)
+
+  if [ -z "${shadow_entry}" ]; then
+    fatal "User ${username} not found in /etc/shadow"
+  fi
+
+  # Extract the password field (second field, colon-separated)
+  local password_hash
+  password_hash=$(echo "${shadow_entry}" | cut -d: -f2)
+
+  # Check password is not empty, locked (!), or disabled (*)
+  if [ -z "${password_hash}" ] || [ "${password_hash}" = "!" ] || [ "${password_hash}" = "*" ] || [ "${password_hash}" = "!!" ]; then
+    error "Password hash invalid for ${username}: ${password_hash}"
+    fatal "Password was not set correctly for Salt API user"
+  fi
+
+  success "Password verified in /etc/shadow (hash present)"
+
+  # Verify PAM authentication works using Salt's Python (which has python-pam installed)
+  info "Verifying PAM authentication..."
+  if [ -x /opt/saltstack/salt/bin/python3 ]; then
+    if /opt/saltstack/salt/bin/python3 << PYEOF 2>> "${LOG_FILE}"
+import pam
+p = pam.pam()
+if p.authenticate('${username}', '${password}', service='login'):
+    print("PAM authentication verified successfully")
+    exit(0)
+else:
+    print("PAM authentication failed: " + str(p.reason))
+    exit(1)
+PYEOF
+    then
+      success "PAM authentication verified with python-pam"
+    else
+      warning "PAM authentication test failed - will retry after services start"
+    fi
+  else
+    info "Salt Python not yet available - PAM verification will happen during API test"
+  fi
 
   # Configure PAM authentication for salt-api
   info "Configuring PAM authentication for salt-api..."
@@ -517,6 +541,7 @@ test_salt_api() {
   local token=""
   local auth_attempts=0
   local auth_max_attempts=3
+  local services_restarted=false
 
   while [ $auth_attempts -lt $auth_max_attempts ]; do
     token=$(curl -sSk --connect-timeout 5 --max-time 10 "http://127.0.0.1:8001/login" \
@@ -533,16 +558,57 @@ test_salt_api() {
     fi
 
     auth_attempts=$((auth_attempts + 1))
+
+    # If first attempt fails and we haven't restarted services, do so now
+    # This ensures PAM picks up any password changes
+    if [ $auth_attempts -eq 1 ] && [ "$services_restarted" != "true" ]; then
+      warning "Authentication failed, restarting Salt services to ensure PAM reload..."
+      systemctl restart salt-master 2>/dev/null || true
+      sleep 5
+      systemctl restart salt-api 2>/dev/null || true
+      sleep 10
+      services_restarted=true
+      info "Services restarted, retrying authentication..."
+      continue
+    fi
+
     if [ $auth_attempts -lt $auth_max_attempts ]; then
       warning "Authentication failed, retrying... (attempt ${auth_attempts}/${auth_max_attempts})"
-      sleep 2
+      sleep 3
     fi
   done
 
   error "Salt API authentication failed after ${auth_max_attempts} attempts"
   error "Please check credentials and PAM configuration"
+  info "Debugging information:"
+  info "  Username: ${SALT_API_USER}"
+  info "  Password length: ${#SALT_API_PASSWORD} characters"
+
+  # Check if user exists and has password
+  if grep -q "^${SALT_API_USER}:" /etc/shadow 2>/dev/null; then
+    info "  User exists in /etc/shadow: YES"
+  else
+    error "  User exists in /etc/shadow: NO"
+  fi
+
+  # Test PAM directly
+  info "Testing PAM authentication directly..."
+  if [ -x /opt/saltstack/salt/bin/python3 ]; then
+    /opt/saltstack/salt/bin/python3 << PYEOF || true
+import pam
+p = pam.pam()
+result = p.authenticate('${SALT_API_USER}', '${SALT_API_PASSWORD}', service='login')
+print(f"  PAM auth result: {result}")
+if not result:
+    print(f"  PAM reason: {p.reason}")
+PYEOF
+  fi
+
+  info "Checking Salt Master logs for eauth errors:"
+  journalctl -u salt-master -n 20 --no-pager 2>/dev/null | grep -i "eauth\|auth\|pam" || true
+
   info "Checking Salt API logs:"
-  journalctl -u salt-api -n 30 --no-pager || true
+  journalctl -u salt-api -n 20 --no-pager || true
   return 1
 }
 
