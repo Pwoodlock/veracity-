@@ -17,8 +17,7 @@ const consumer = createConsumer()
 window.ActionCable = { createConsumer: () => consumer }
 
 // Connect ActionCable to Turbo Streams for real-time updates
-import * as Turbo from "@hotwired/turbo-rails"
-Turbo.connectStreamSource(consumer)
+// Note: Turbo.connectStreamSource is handled internally by turbo-rails
 
 // ApexCharts - Charting library
 import ApexCharts from "apexcharts"
