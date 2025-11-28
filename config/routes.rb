@@ -36,6 +36,14 @@ Rails.application.routes.draw do
 
   # Admin namespace for administrative features
   namespace :admin do
+    # Salt CLI - Full terminal access for admins
+    get 'salt_cli' => 'salt_cli#index', as: :salt_cli
+    get 'salt_cli/history' => 'salt_cli#history', as: :salt_cli_history
+    post 'salt_cli/execute' => 'salt_cli#execute', as: :salt_cli_execute
+    get 'salt_cli/command/:id' => 'salt_cli#show_command', as: :salt_cli_show_command
+    delete 'salt_cli/command/:id' => 'salt_cli#destroy_command', as: :salt_cli_command
+    delete 'salt_cli/history' => 'salt_cli#clear_history', as: :salt_cli_clear_history
+
     # Gotify Push Notifications Administration
     get 'gotify' => 'gotify#index', as: :gotify
     get 'gotify/applications' => 'gotify#applications', as: :gotify_applications
