@@ -56,6 +56,14 @@ Rails.application.configure do
   # Use Sidekiq for background jobs
   config.active_job.queue_adapter = :sidekiq
 
+  # ActionCable configuration for WebSocket connections
+  config.action_cable.allowed_request_origins = [
+    "https://veracity-stag.devsec.ie",
+    "https://www.veracity-stag.devsec.ie",
+    /https:\/\/.*\.devsec\.ie/
+  ]
+  config.action_cable.disable_request_forgery_protection = false
+
   # Ignore bad email addresses and do not raise email delivery errors.
   # Set this to true and configure the email server for immediate delivery to raise delivery errors.
   # config.action_mailer.raise_delivery_errors = false
