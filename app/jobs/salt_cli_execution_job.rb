@@ -99,10 +99,10 @@ class SaltCliExecutionJob < ApplicationJob
   private
 
   def build_command(command)
-    # Run as deploy user who has passwordless sudo for salt-* commands
+    # The puma service runs as deploy user who has passwordless sudo for salt-* commands
     # deploy ALL=(ALL) NOPASSWD: /usr/bin/salt, /usr/bin/salt-key, etc.
-    escaped_command = command.gsub("'", "'\\''")
-    "sudo -u deploy bash -lc 'sudo #{escaped_command}'"
+    # Simply prepend sudo since we're already running as deploy
+    "sudo #{command}"
   end
 
   def fail_command(command_record, user, message)
