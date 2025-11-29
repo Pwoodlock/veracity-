@@ -67,7 +67,13 @@ class CveMonitoringService
                 # Note: is_up is a property, not a method
                 is_up = pvl.is_up
                 info = pvl.get_info() if is_up else {}
-                print(json.dumps({"status": "ok" if is_up else "down", "root_url": root_url, "info": info}))
+                # Get package version
+                try:
+                    from importlib.metadata import version as pkg_version
+                    lib_version = pkg_version('pyvulnerabilitylookup')
+                except Exception:
+                    lib_version = 'unknown'
+                print(json.dumps({"status": "ok" if is_up else "down", "root_url": root_url, "info": info, "library_version": lib_version}))
 
             else:
                 print(json.dumps({"error": f"Unknown command: {command}"}))
@@ -300,7 +306,9 @@ class CveMonitoringService
         {
           success: true,
           message: "Connection successful! API URL: #{result['root_url']}",
-          version: result['version']
+          version: result['version'],
+          library_version: result['library_version'],
+          api_info: result['info']
         }
       rescue PythonError => e
         {
