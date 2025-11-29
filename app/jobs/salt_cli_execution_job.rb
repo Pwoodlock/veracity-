@@ -29,6 +29,7 @@ class SaltCliExecutionJob < ApplicationJob
 
     # Execute command
     output = StringIO.new
+    buffer = StringIO.new
     exit_status = nil
 
     begin
@@ -43,19 +44,36 @@ class SaltCliExecutionJob < ApplicationJob
         begin
           stdout.each_char do |char|
             output << char
+            buffer << char
 
-            # Broadcast character-by-character for real-time feel
-            # Buffer small chunks for efficiency
-            if output.string.length % 100 == 0 || char == "\n"
+            # Send buffered chunks on newlines or when buffer is large enough
+            if char == "\n" || buffer.string.length >= 100
               broadcast_to_user(user, {
                 type: 'output',
                 command_id: command_record.id,
-                data: output.string
+                data: buffer.string
               })
+              buffer = StringIO.new
             end
           end
+
+          # Send any remaining buffered content
+          if buffer.string.length > 0
+            broadcast_to_user(user, {
+              type: 'output',
+              command_id: command_record.id,
+              data: buffer.string
+            })
+          end
         rescue Errno::EIO
-          # End of output
+          # End of output - send any remaining buffer
+          if buffer.string.length > 0
+            broadcast_to_user(user, {
+              type: 'output',
+              command_id: command_record.id,
+              data: buffer.string
+            })
+          end
         end
 
         # Wait for process to finish
@@ -65,19 +83,18 @@ class SaltCliExecutionJob < ApplicationJob
     rescue PTY::ChildExited => e
       exit_status = e.status.exitstatus
     rescue => e
-      output << "\r\n\e[31mError: #{e.message}\e[0m\r\n"
+      error_msg = "\r\n\e[31mError: #{e.message}\e[0m\r\n"
+      output << error_msg
+      broadcast_to_user(user, {
+        type: 'output',
+        command_id: command_record.id,
+        data: error_msg
+      })
       exit_status = 1
       Rails.logger.error "SaltCliExecutionJob error: #{e.message}\n#{e.backtrace.first(5).join("\n")}"
     end
 
-    # Final broadcast with complete output
     final_output = output.string
-    broadcast_to_user(user, {
-      type: 'output',
-      command_id: command_record.id,
-      data: final_output,
-      final: true
-    })
 
     # Update command record
     command_record.update!(
