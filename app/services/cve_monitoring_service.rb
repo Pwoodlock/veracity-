@@ -42,8 +42,9 @@ class CveMonitoringService
                 print(json.dumps(result))
 
             elif command == "get_recent":
-                days_back = int(sys.argv[3]) if len(sys.argv) > 3 else 7
-                result = pvl.get_last(days=days_back)
+                # number parameter returns the last N vulnerabilities, not days
+                num_vulns = int(sys.argv[3]) if len(sys.argv) > 3 else 100
+                result = pvl.get_last(number=num_vulns)
                 print(json.dumps(result))
 
             elif command == "get_cisa_kevs":
