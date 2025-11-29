@@ -43,8 +43,7 @@ class CveMonitoringService
 
             elif command == "get_recent":
                 days_back = int(sys.argv[3]) if len(sys.argv) > 3 else 7
-                date_from = datetime.now() - timedelta(days=days_back)
-                result = pvl.get_recent(date_from=date_from)
+                result = pvl.get_last(days=days_back)
                 print(json.dumps(result))
 
             elif command == "get_cisa_kevs":
@@ -64,8 +63,10 @@ class CveMonitoringService
 
             elif command == "test_connection":
                 # Test connection by checking API health/version
-                # Just return success if we got here without errors
-                print(json.dumps({"status": "ok", "root_url": root_url}))
+                # Note: is_up is a property, not a method
+                is_up = pvl.is_up
+                info = pvl.get_info() if is_up else {}
+                print(json.dumps({"status": "ok" if is_up else "down", "root_url": root_url, "info": info}))
 
             else:
                 print(json.dumps({"error": f"Unknown command: {command}"}))
@@ -334,14 +335,14 @@ class CveMonitoringService
       begin
         # Get configurable settings
         api_url = SystemSetting.get('vulnerability_lookup_url', 'https://vulnerability.circl.lu')
-        python_path = SystemSetting.get('vulnerability_lookup_python_path', '/opt/veracity/app/cve_venv/bin/python')
+        python_path = SystemSetting.get('vulnerability_lookup_python_path', '/opt/veracity/app/integrations_venv/bin/python')
         timeout = SystemSetting.get('vulnerability_lookup_timeout', 120)
 
         # Use configured Python path, fallback if doesn't exist
         python_cmd = if File.exist?(python_path)
                       python_path
-                    elsif File.exist?('/opt/veracity/app/cve_venv/bin/python')
-                      '/opt/veracity/app/cve_venv/bin/python'
+                    elsif File.exist?('/opt/veracity/app/integrations_venv/bin/python')
+                      '/opt/veracity/app/integrations_venv/bin/python'
                     else
                       'python3'
                     end

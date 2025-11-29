@@ -16,8 +16,10 @@ source "${SERVICE_SCRIPT_DIR}/../lib/common.sh"
 if [[ -z "${APP_DIR:-}" ]]; then
   readonly APP_DIR="/opt/veracity/app"
 fi
-readonly CVE_VENV_DIR="${APP_DIR}/cve_venv"
-readonly CVE_WRAPPER="${APP_DIR}/bin/cve_python"
+# NOTE: Using integrations_venv for consistency with python_integrations.sh
+# The unified integrations_venv contains all Python packages (CVE, Hetzner, Proxmox)
+readonly CVE_VENV_DIR="${APP_DIR}/integrations_venv"
+readonly CVE_WRAPPER="${APP_DIR}/bin/integration_python"
 if [[ -z "${DEPLOY_USER:-}" ]]; then
   readonly DEPLOY_USER="deploy"
 fi
@@ -152,9 +154,9 @@ create_wrapper_script() {
   # Create wrapper script
   cat > "${CVE_WRAPPER}" << 'EOF'
 #!/bin/bash
-# Python wrapper for CVE monitoring
-# Uses the virtual environment for PyVulnerabilityLookup
-/opt/veracity/app/cve_venv/bin/python "$@"
+# Python wrapper for integrations (CVE, Hetzner, Proxmox)
+# Uses the unified virtual environment with all integration packages
+/opt/veracity/app/integrations_venv/bin/python "$@"
 EOF
 
   # Make executable
@@ -207,7 +209,7 @@ setup_cve_monitoring() {
   export VULNERABILITY_LOOKUP_ENABLED="true"
   export VULNERABILITY_LOOKUP_URL="${CVE_URL:-https://vulnerability.circl.lu}"
   export VULNERABILITY_LOOKUP_SCAN_SCHEDULE="${CVE_SCHEDULE:-0 2 * * *}"
-  export VULNERABILITY_LOOKUP_PYTHON_PATH="${CVE_WRAPPER}"
+  export VULNERABILITY_LOOKUP_PYTHON_PATH="${APP_DIR}/integrations_venv/bin/python"
   export VULNERABILITY_LOOKUP_TIMEOUT="60"
 }
 
